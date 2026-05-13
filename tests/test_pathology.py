@@ -1,7 +1,5 @@
 import numpy as np
-import pytest
-from scrutable.models import WorkloadModel, WorkloadState, Pathology, PathologyScope
-from scrutable.workload import WorkloadRegistry
+from scrutable.models import WorkloadState, Pathology, PathologyScope
 from scrutable.event_loop import EventLoop
 from scrutable.pathology import (
     stable_subset,
