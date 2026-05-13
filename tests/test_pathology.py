@@ -149,14 +149,13 @@ def test_stochastic_pathology_fires_over_time(tiny_infra):
     workload_states: dict[str, WorkloadState] = {}
     rng = np.random.default_rng(42)
     injector = PathologyInjector(loop, tiny_infra, workload_states, rng)
-
     pathology = Pathology(
         pathology_id="stoch",
         scope=PathologyScope(target_type="node", filter_id=None, percentage=1.0),
         node_effects={"latency_multiplier": 2.0},
     )
-    injector.add_stochastic(StochasticPathology(pathology=pathology, rate=1.0, duration=0.5))
-    loop.run(20.0)
-    # with rate=1 over 20s we expect multiple firings; just check responses were collected
-    # (the injector resets nodes so they may oscillate — just verify loop ran)
-    assert loop.now <= 20.0
+    injector.add_stochastic(StochasticPathology(pathology=pathology, rate=2.0, duration=100.0))
+    # rate=2/s, duration=100s — the pathology fires quickly and stays applied.
+    # After running 5s (expected ~10 firings), the node should be in the modified state.
+    loop.run(5.0)
+    assert tiny_infra.get_node("r1c1n1").latency_multiplier == 2.0

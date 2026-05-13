@@ -39,6 +39,9 @@ def apply_pathology(
 
     if pathology.scope.target_type == "workload" and pathology.workload_effects:
         for wid in _get_affected_workload_ids(pathology, workload_states):
+            # setdefault bootstraps state for workloads that haven't been seen yet,
+            # which is intentional: a pathology can affect a workload before it has
+            # produced any events.
             state = workload_states.setdefault(wid, WorkloadState(wid))
             for k, v in pathology.workload_effects.items():
                 setattr(state, k, v)
@@ -57,7 +60,9 @@ def remove_pathology(
 
     if pathology.scope.target_type == "workload" and pathology.workload_effects:
         for wid in _get_affected_workload_ids(pathology, workload_states):
-            state = workload_states.setdefault(wid, WorkloadState(wid))
+            state = workload_states.get(wid)
+            if state is None:
+                continue
             for k in pathology.workload_effects:
                 setattr(state, k, 1.0)
 
