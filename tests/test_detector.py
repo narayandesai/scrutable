@@ -42,7 +42,7 @@ def test_detector_protocol_satisfied():
     assert isinstance(d, Detector)
 
 
-def test_actuator_protocol_satisfied(tiny_infra):
+def test_actuator_protocol_satisfied():
     a = DrainActuator()
     assert isinstance(a, Actuator)
 
