@@ -42,8 +42,13 @@ class SimulationEngine:
         self._ops = OperationsSystem(infra)
         self._detectors: list[Detector] = []
         self._actuators: list[Actuator] = []
+        self._started: bool = False
 
     def add_detector(self, detector: Detector) -> None:
+        if detector.tick_interval <= 0:
+            raise ValueError(
+                f"detector.tick_interval must be > 0, got {detector.tick_interval!r}"
+            )
         self._detectors.append(detector)
 
     def add_actuator(self, actuator: Actuator) -> None:
@@ -68,6 +73,9 @@ class SimulationEngine:
         return self._ops
 
     def run(self, until: float) -> None:
+        if self._started:
+            raise RuntimeError("SimulationEngine.run called more than once")
+        self._started = True
         self._synthesizer.start()
         for detector in self._detectors:
             self._schedule_detector_tick(detector, 0.0)

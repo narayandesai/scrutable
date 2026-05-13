@@ -130,3 +130,25 @@ def test_detector_and_actuator_wired_in_engine(tiny_infra):
     engine.add_actuator(actuator)
     engine.run(10.0)
     assert len(actuator.inferences) > 0
+
+
+def test_engine_run_raises_on_second_call(tiny_infra):
+    import pytest
+    engine = _make_engine(tiny_infra)
+    engine.run(0.1)
+    with pytest.raises(RuntimeError):
+        engine.run(0.1)
+
+
+def test_add_detector_raises_on_zero_tick_interval(tiny_infra):
+    import pytest
+    engine = _make_engine(tiny_infra)
+
+    class BadDetector:
+        detector_id = "bad"
+        window_size = 5.0
+        tick_interval = 0.0
+        def detect(self, window): return []
+
+    with pytest.raises(ValueError):
+        engine.add_detector(BadDetector())
