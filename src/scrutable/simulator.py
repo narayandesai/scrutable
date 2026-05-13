@@ -29,6 +29,7 @@ class ServiceSimulator:
     def handle_request(self, request: Request) -> None:
         enabled = self._infra.enabled_clusters()
         if not enabled:
+            # Safe: at event time T=issued_at, all prior arrivals are already buffered; latency=0 keeps order
             self._buffer.append(
                 Response(
                     request_id=request.request_id,
@@ -45,6 +46,21 @@ class ServiceSimulator:
 
         cluster = enabled[int(self._rng.integers(len(enabled)))]
         node_ids = self._infra.nodes_in_cluster(cluster.cluster_id)
+        if not node_ids:
+            # Safe: at event time T=issued_at, all prior arrivals are already buffered; latency=0 keeps order
+            self._buffer.append(
+                Response(
+                    request_id=request.request_id,
+                    workload_id=request.workload_id,
+                    node_id="",
+                    cluster_id=cluster.cluster_id,
+                    region_id=cluster.region_id,
+                    issued_at=request.issued_at,
+                    latency=0.0,
+                    error_code=_NO_CLUSTER_ERROR,
+                )
+            )
+            return
         node_id = node_ids[int(self._rng.integers(len(node_ids)))]
         node_state = self._infra.get_node(node_id)
 

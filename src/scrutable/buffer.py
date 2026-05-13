@@ -10,8 +10,9 @@ class ResponseBuffer:
 
     def append(self, response: Response) -> None:
         arrival = response.issued_at + response.latency
-        self._responses.append(response)
-        self._arrivals.append(arrival)
+        idx = bisect.bisect_right(self._arrivals, arrival)
+        self._responses.insert(idx, response)
+        self._arrivals.insert(idx, arrival)
 
     def window(self, start: float, end: float) -> list[Response]:
         lo = bisect.bisect_left(self._arrivals, start)

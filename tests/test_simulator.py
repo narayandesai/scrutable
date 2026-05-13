@@ -75,3 +75,19 @@ def test_multiple_requests_produce_multiple_responses(tiny_infra):
         sim.handle_request(Request(request_id=f"r{i}", workload_id="wl1", issued_at=float(i)))
     loop.run(1000.0)
     assert len(buffer.window(0.0, 1000.0)) == 10
+
+
+def test_503_and_normal_responses_in_same_buffer(tiny_infra):
+    loop, sim, buffer = _make_simulator(tiny_infra)
+    # issue a normal request first — response schedules for a future time
+    sim.handle_request(Request(request_id="r1", workload_id="wl1", issued_at=0.0))
+    # disable all clusters and issue a 503 — appended directly at issued_at=0.5
+    for c in tiny_infra.all_clusters():
+        c.traffic_enabled = False
+    sim.handle_request(Request(request_id="r2", workload_id="wl1", issued_at=0.5))
+    loop.run(100.0)
+    all_resp = buffer.window(0.0, 100.0)
+    assert len(all_resp) == 2
+    # 503 arrives at 0.5, normal response arrives at 0.0 + latency (> 0.5 or <= 0.5 both ok sorted)
+    arrivals = [r.issued_at + r.latency for r in all_resp]
+    assert arrivals == sorted(arrivals)
