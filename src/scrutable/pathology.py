@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import hashlib
 import numpy as np
 from scrutable.models import Pathology, WorkloadState
 from scrutable.infrastructure import InfrastructureModel
@@ -8,7 +9,10 @@ from scrutable.event_loop import EventLoop
 
 def stable_subset(entities: list[str], percentage: float, pathology_id: str) -> set[str]:
     threshold = int(percentage * 1000)
-    return {e for e in entities if abs(hash(e + pathology_id)) % 1000 < threshold}
+    return {
+        e for e in entities
+        if int.from_bytes(hashlib.md5((e + pathology_id).encode()).digest()[:4], "little") % 1000 < threshold
+    }
 
 
 def _get_affected_node_ids(pathology: Pathology, infra: InfrastructureModel) -> list[str]:
