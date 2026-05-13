@@ -14,6 +14,6 @@
 - [ ] Performance: event loop kernel has a clean boundary for future Rust replacement via PyO3
 
 ## Polish
-- [ ] Add `pyrightconfig.json` to silence false-positive `reportMissingImports` warnings from Pyright (src layout + .venv not visible to Pyright by default)
+- [x] Add `pyrightconfig.json` to silence false-positive `reportMissingImports` warnings from Pyright (src layout + .venv not visible to Pyright by default)
 - [ ] `WorkloadRegistry.get()` raises a bare `KeyError` — a `ValueError` with the unknown ID in the message would be friendlier
 - [ ] `PathologyInjector` is not exported from `__init__.py` — decide if it belongs in the public API
