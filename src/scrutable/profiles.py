@@ -1,17 +1,16 @@
-from __future__ import annotations
 import math
 import numpy as np
 from dataclasses import dataclass
 from scrutable.models import WorkloadModel
 
 
-@dataclass
+@dataclass(frozen=True)
 class FieldDist:
     lognormal_mean: float   # mean of the underlying normal (i.e. mean of log(X))
     lognormal_sigma: float  # sigma of the underlying normal
 
 
-@dataclass
+@dataclass(frozen=True)
 class WorkloadProfile:
     name: str
     latency_median: FieldDist
