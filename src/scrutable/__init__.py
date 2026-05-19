@@ -17,6 +17,15 @@ from scrutable.pathology import TimedPathology, StochasticPathology
 from scrutable.operations import SoftwareVersion, RolloutSystem, OperationsSystem
 from scrutable.detector import Detector
 from scrutable.actuator import Actuator
+from scrutable.profiles import (
+    FieldDist,
+    WorkloadProfile,
+    sample_workload,
+    CONSISTENT_FAST,
+    HIGH_VARIANCE_LATENCY,
+    BURSTY_ERRORS,
+    SLOW_RELIABLE,
+)
 
 __all__ = [
     "SimulationEngine",
@@ -40,4 +49,11 @@ __all__ = [
     "OperationsSystem",
     "Detector",
     "Actuator",
+    "FieldDist",
+    "WorkloadProfile",
+    "sample_workload",
+    "CONSISTENT_FAST",
+    "HIGH_VARIANCE_LATENCY",
+    "BURSTY_ERRORS",
+    "SLOW_RELIABLE",
 ]
