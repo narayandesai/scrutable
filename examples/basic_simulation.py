@@ -1,6 +1,6 @@
 import numpy as np
 import scrutable as sc
-from scrutable.profiles import sample_workload, CONSISTENT_FAST, HIGH_VARIANCE_LATENCY, BURSTY_ERRORS, SLOW_RELIABLE
+from scrutable import sample_workload, CONSISTENT_FAST, HIGH_VARIANCE_LATENCY, BURSTY_ERRORS, SLOW_RELIABLE
 
 # --- Constants ---
 SEED = 42
