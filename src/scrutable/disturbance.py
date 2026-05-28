@@ -51,6 +51,10 @@ def apply_disturbance(
                 setattr(state, k, v)
 
 
+def _effect_default(key: str) -> float:
+    return 0.0 if key.endswith("_addend") else 1.0
+
+
 def remove_disturbance(
     disturbance: Disturbance,
     plant: Plant,
@@ -60,7 +64,7 @@ def remove_disturbance(
         for node_id in _get_affected_node_ids(disturbance, plant):
             state = plant.get_node(node_id)
             for k in disturbance.node_effects:
-                setattr(state, k, 1.0)
+                setattr(state, k, _effect_default(k))
 
     if disturbance.scope.target_type == "workload" and disturbance.workload_effects:
         for wid in _get_affected_workload_ids(disturbance, workload_states):
@@ -68,7 +72,7 @@ def remove_disturbance(
             if state is None:
                 continue
             for k in disturbance.workload_effects:
-                setattr(state, k, 1.0)
+                setattr(state, k, _effect_default(k))
 
 
 @dataclass

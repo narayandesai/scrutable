@@ -16,7 +16,7 @@ def sample_latency(
     rng: np.random.Generator,
 ) -> float:
     base = rng.lognormal(mean=np.log(model.latency_median), sigma=model.latency_sigma)
-    effective = base * wstate.latency_multiplier * nstate.latency_multiplier
+    effective = base * wstate.latency_multiplier * nstate.latency_multiplier + nstate.latency_addend
     noise = rng.normal(0.0, model.noise_sigma)
     return max(0.0, effective + noise)
 

@@ -26,6 +26,7 @@ class NodeState:
     region_id: str
     latency_multiplier: float = 1.0
     error_rate_multiplier: float = 1.0
+    latency_addend: float = 0.0
 
 
 @dataclass

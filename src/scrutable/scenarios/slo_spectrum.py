@@ -28,6 +28,7 @@ class ScenarioResult:
     windows: list[TimeWindow]
     slo_threshold_p999: float
     disturbance_at: float
+    disturbance_addend: float
     detection_time: float | None  # None if not detected
 
 
@@ -43,7 +44,8 @@ def _make_plant() -> Plant:
 
 
 def _compute_window(responses, t_start: float, t_end: float) -> TimeWindow | None:
-    latencies = np.array([r.latency for r in responses if t_start <= r.issued_at < t_end])
+    # responses are already arrival-windowed by the buffer; no issued_at re-filter needed
+    latencies = np.array([r.latency for r in responses])
     if len(latencies) < 10:
         return None
     return TimeWindow(
@@ -64,7 +66,8 @@ def run_slo_scenario(
     burn_in: float = 10.0,      # seconds of baseline before disturbance
     post_disturbance: float = 20.0,  # seconds after disturbance injection
     n_workloads: int = 10,
-    disturbance_multiplier: float = 5.0,
+    disturbance_addend: float = 1.0,  # additive latency penalty in seconds on affected nodes
+    disturbance_coverage: float = 0.5,  # fraction of nodes affected
     window_size: float = 1.0,   # time-series window width in seconds
 ) -> ScenarioResult:
     rng = np.random.default_rng(seed)
@@ -86,8 +89,8 @@ def run_slo_scenario(
 
     disturbance = Disturbance(
         disturbance_id="slo-demo",
-        scope=DisturbanceScope(target_type="node", filter_id=None, percentage=1.0),
-        node_effects={"latency_multiplier": disturbance_multiplier},
+        scope=DisturbanceScope(target_type="node", filter_id=None, percentage=disturbance_coverage),
+        node_effects={"latency_addend": disturbance_addend},
     )
     engine.add_timed_disturbance(TimedDisturbance(
         disturbance=disturbance,
@@ -133,5 +136,6 @@ def run_slo_scenario(
         windows=windows,
         slo_threshold_p999=thresholds.p999_latency,
         disturbance_at=burn_in,
+        disturbance_addend=disturbance_addend,
         detection_time=detection_time,
     )

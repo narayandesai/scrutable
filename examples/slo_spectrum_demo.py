@@ -18,11 +18,12 @@ from plotly.subplots import make_subplots
 import scrutable as sc
 from scrutable.scenarios.slo_spectrum import run_slo_scenario, ScenarioResult
 
-RATE = 2000.0       # req/s per workload — high enough for reliable P99.9 estimation
-BURN_IN = 10.0
-POST_DISTURBANCE = 20.0
+RATE = 200.0        # req/s per workload (×20 workloads = 4000 total)
+BURN_IN = 60.0      # long enough for v5 tail (P99.9≈10s) to fully arrive before calibrating
+POST_DISTURBANCE = 30.0
 N_WORKLOADS = 20
-DISTURBANCE_MULTIPLIER = 5.0
+DISTURBANCE_ADDEND = 1.0   # additive latency penalty on affected nodes (seconds)
+DISTURBANCE_COVERAGE = 0.5  # fraction of nodes affected
 SEED = 42
 
 PERCENTILE_COLORS = {
@@ -95,7 +96,7 @@ def build_figure(results: list[ScenarioResult]) -> go.Figure:
         title=dict(
             text=(
                 "SLO Threshold Detection Across Latency Variance Spectrum<br>"
-                f"<sup>Disturbance: {DISTURBANCE_MULTIPLIER}x latency multiplier at T={BURN_IN}s  |  "
+                f"<sup>Disturbance: +{DISTURBANCE_ADDEND}s addend on {int(DISTURBANCE_COVERAGE*100)}% of nodes at T={BURN_IN}s  |  "
                 f"Gray dotted = disturbance injected  |  Green solid = detected  |  "
                 f"Red dashed = SLO threshold</sup>"
             ),
@@ -126,7 +127,8 @@ def main() -> None:
             burn_in=BURN_IN,
             post_disturbance=POST_DISTURBANCE,
             n_workloads=N_WORKLOADS,
-            disturbance_multiplier=DISTURBANCE_MULTIPLIER,
+            disturbance_addend=DISTURBANCE_ADDEND,
+            disturbance_coverage=DISTURBANCE_COVERAGE,
         )
         detected = f"detected at T={result.detection_time:.1f}s" if result.detection_time else "not detected"
         print(detected)

@@ -116,3 +116,13 @@ def test_registry_missing_key_raises():
     registry = WorkloadRegistry()
     with pytest.raises(KeyError):
         registry.get("nonexistent")
+
+
+def test_sample_latency_addend_increases_latency(model, neutral_wstate):
+    rng1 = np.random.default_rng(42)
+    rng2 = np.random.default_rng(42)
+    nstate_no_addend = NodeState(node_id="n1", cluster_id="c1", region_id="r1", latency_addend=0.0)
+    nstate_with_addend = NodeState(node_id="n1", cluster_id="c1", region_id="r1", latency_addend=1.0)
+    baseline = np.mean([sample_latency(model, neutral_wstate, nstate_no_addend, rng1) for _ in range(100)])
+    elevated = np.mean([sample_latency(model, neutral_wstate, nstate_with_addend, rng2) for _ in range(100)])
+    assert elevated > baseline + 0.9

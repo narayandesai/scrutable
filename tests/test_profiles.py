@@ -66,16 +66,15 @@ def test_latency_variance_spectrum_profiles_have_equal_median():
     assert len(set(medians)) == 1
 
 
-def test_latency_variance_spectrum_samples_ordered_by_variance():
-    rng = np.random.default_rng(0)
-    stds = []
-    for profile in LATENCY_VARIANCE_SPECTRUM:
-        latencies = [
-            sample_workload(profile, f"wl-{i}", np.random.default_rng(i)).latency_sigma
-            for i in range(200)
-        ]
-        stds.append(float(np.std(latencies)))
-    assert stds == sorted(stds)
+def test_latency_variance_spectrum_sigmas_strictly_ordered():
+    # All profiles use lognormal_sigma=0.0 (deterministic sigma), so the ordering
+    # is in the mean latency_sigma value, not the spread.
+    sigmas = [
+        sample_workload(profile, "wl-0", np.random.default_rng(0)).latency_sigma
+        for profile in LATENCY_VARIANCE_SPECTRUM
+    ]
+    assert sigmas == sorted(sigmas)
+    assert len(set(sigmas)) == len(sigmas), "All sigma values should be distinct"
 
 
 def test_error_shape_clamped_to_minimum():

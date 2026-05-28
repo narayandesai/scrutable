@@ -144,6 +144,31 @@ def test_timed_disturbance_removed_at_correct_time(tiny_infra):
     assert tiny_infra.get_node("r1c1n1").latency_multiplier == 1.0
 
 
+def test_apply_disturbance_sets_latency_addend(tiny_infra):
+    workload_states: dict[str, WorkloadState] = {}
+    disturbance = Disturbance(
+        disturbance_id="d-addend",
+        scope=DisturbanceScope(target_type="node", filter_id=None, percentage=1.0),
+        node_effects={"latency_addend": 0.5},
+    )
+    apply_disturbance(disturbance, tiny_infra, workload_states)
+    for node in tiny_infra.all_nodes():
+        assert node.latency_addend == 0.5
+
+
+def test_remove_disturbance_resets_latency_addend_to_zero(tiny_infra):
+    workload_states: dict[str, WorkloadState] = {}
+    disturbance = Disturbance(
+        disturbance_id="d-addend",
+        scope=DisturbanceScope(target_type="node", filter_id=None, percentage=1.0),
+        node_effects={"latency_addend": 0.5},
+    )
+    apply_disturbance(disturbance, tiny_infra, workload_states)
+    remove_disturbance(disturbance, tiny_infra, workload_states)
+    for node in tiny_infra.all_nodes():
+        assert node.latency_addend == 0.0
+
+
 def test_stochastic_disturbance_fires_over_time(tiny_infra):
     loop = EventLoop()
     workload_states: dict[str, WorkloadState] = {}
