@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 from scrutable.plant import PlantConfig, Plant
 from scrutable.workload import WorkloadRegistry
@@ -124,34 +125,42 @@ def _run_one(
     )
 
 
+def _run_one_kwargs(kwargs: dict) -> PerformancePoint:
+    return _run_one(**kwargs)
+
+
 def sweep_slo_performance(
     profiles: list[WorkloadProfile],
     window_sizes: list[float],
     seed: int = 42,
-    rate: float = 5.0,        # low rate so detection-window sample count matters
+    rate: float = 5.0,
     n_workloads: int = 10,
-    burn_in: float = 120.0,   # long enough for stable full-burn-in calibration on v5
+    burn_in: float = 120.0,
     post_disturbance: float = 60.0,
-    disturbance_addend: float = 0.8,   # weaker signal: marginal for v3, invisible for v4+
+    disturbance_addend: float = 0.8,
     disturbance_coverage: float = 0.5,
     calibration_multiplier: float = 2.0,
     percentile: float = 99.9,
+    workers: int = 1,
 ) -> list[PerformancePoint]:
-    results = []
-    for profile in profiles:
-        for ws in window_sizes:
-            pt = _run_one(
-                profile=profile,
-                window_size=ws,
-                seed=seed,
-                rate=rate,
-                n_workloads=n_workloads,
-                burn_in=burn_in,
-                post_disturbance=post_disturbance,
-                disturbance_addend=disturbance_addend,
-                disturbance_coverage=disturbance_coverage,
-                calibration_multiplier=calibration_multiplier,
-                percentile=percentile,
-            )
-            results.append(pt)
-    return results
+    all_kwargs = [
+        dict(
+            profile=profile,
+            window_size=ws,
+            seed=seed,
+            rate=rate,
+            n_workloads=n_workloads,
+            burn_in=burn_in,
+            post_disturbance=post_disturbance,
+            disturbance_addend=disturbance_addend,
+            disturbance_coverage=disturbance_coverage,
+            calibration_multiplier=calibration_multiplier,
+            percentile=percentile,
+        )
+        for profile in profiles
+        for ws in window_sizes
+    ]
+    if workers == 1:
+        return [_run_one(**kw) for kw in all_kwargs]
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(_run_one_kwargs, all_kwargs))

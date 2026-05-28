@@ -10,10 +10,12 @@ detection quality degrades as latency variance grows.
 
 Usage:
     uv run examples/slo_performance_demo.py
+    uv run examples/slo_performance_demo.py --workers 4
     uv run examples/slo_performance_demo.py --save slo_performance.html
 """
 from __future__ import annotations
 import argparse
+import os
 import scrutable as sc
 from scrutable.scenarios.slo_performance import sweep_slo_performance
 import plotly.graph_objects as go
@@ -92,10 +94,14 @@ def build_figure(results) -> go.Figure:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--save", metavar="FILE")
+    parser.add_argument("--workers", type=int, default=os.cpu_count() or 1,
+                        help="parallel worker processes (default: cpu count)")
     args = parser.parse_args()
 
+    n_runs = len(sc.LATENCY_VARIANCE_SPECTRUM) * len(WINDOW_SIZES)
     print("Sweeping performance across spectrum × window sizes...")
     print(f"  Profiles: {len(sc.LATENCY_VARIANCE_SPECTRUM)}  |  Window sizes: {WINDOW_SIZES}")
+    print(f"  {n_runs} runs  |  workers={args.workers}")
 
     results = sweep_slo_performance(
         sc.LATENCY_VARIANCE_SPECTRUM,
@@ -105,6 +111,7 @@ def main() -> None:
         n_workloads=N_WORKLOADS,
         burn_in=BURN_IN,
         post_disturbance=POST_DISTURBANCE,
+        workers=args.workers,
     )
 
     print("\nResults:")

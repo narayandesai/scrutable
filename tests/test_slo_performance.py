@@ -67,3 +67,17 @@ def test_recall_lower_on_high_variance_profile():
     low_recall = next(r.recall for r in results if r.profile_name == low_var.name)
     high_recall = next(r.recall for r in results if r.profile_name == high_var.name)
     assert low_recall > high_recall
+
+
+def test_sweep_parallel_matches_serial():
+    profiles = LATENCY_VARIANCE_SPECTRUM[:2]
+    window_sizes = [1.0, 2.0]
+    common = dict(seed=42, rate=200.0, n_workloads=5, burn_in=10.0, post_disturbance=10.0)
+    serial = sweep_slo_performance(profiles, window_sizes, workers=1, **common)
+    parallel = sweep_slo_performance(profiles, window_sizes, workers=2, **common)
+    assert len(parallel) == len(serial)
+    for s, p in zip(serial, parallel):
+        assert s.profile_name == p.profile_name
+        assert s.window_size == p.window_size
+        assert s.recall == p.recall
+        assert s.fpr == p.fpr
