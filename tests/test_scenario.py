@@ -1,8 +1,8 @@
 import numpy as np
-from scrutable.models import WorkloadModel, Pathology, PathologyScope, WorkloadState, Inference
+from scrutable.models import WorkloadModel, Disturbance, DisturbanceScope, WorkloadState, Inference
 from scrutable.workload import WorkloadRegistry
-from scrutable.synthesizer import SynthesizerConfig
-from scrutable.pathology import TimedPathology
+from scrutable.synthesizer import InputConfig
+from scrutable.disturbance import TimedDisturbance
 from scrutable.operations import SoftwareVersion
 from scrutable.engine import SimulationEngine
 from scrutable.detector import Detector
@@ -27,7 +27,7 @@ def _make_registry():
 
 def _make_engine(tiny_infra, seed=42):
     registry = _make_registry()
-    config = SynthesizerConfig(workload_rates={"wl1": 50.0})
+    config = InputConfig(workload_rates={"wl1": 50.0})
     return SimulationEngine(tiny_infra, registry, config, seed=seed)
 
 
@@ -49,8 +49,8 @@ def test_engine_responses_have_valid_fields(tiny_infra):
 
 
 def test_engine_reproducible_with_same_seed(tiny_infra):
-    from scrutable.infrastructure import InfrastructureConfig, InfrastructureModel
-    config = InfrastructureConfig(
+    from scrutable.plant import PlantConfig, Plant
+    config = PlantConfig(
         regions=["r1", "r2"],
         clusters={"r1": ["r1c1", "r1c2"], "r2": ["r2c1", "r2c2"]},
         nodes={
@@ -60,8 +60,8 @@ def test_engine_reproducible_with_same_seed(tiny_infra):
             "r2c2": ["r2c2n1", "r2c2n2", "r2c2n3"],
         },
     )
-    infra1 = InfrastructureModel(config)
-    infra2 = InfrastructureModel(config)
+    infra1 = Plant(config)
+    infra2 = Plant(config)
     e1 = _make_engine(infra1, seed=99)
     e2 = _make_engine(infra2, seed=99)
     e1.run(2.0)
@@ -75,14 +75,14 @@ def test_engine_reproducible_with_same_seed(tiny_infra):
         assert a.error_code == b.error_code
 
 
-def test_timed_pathology_elevates_latency(tiny_infra):
+def test_timed_disturbance_elevates_latency(tiny_infra):
     engine = _make_engine(tiny_infra, seed=0)
-    pathology = Pathology(
-        pathology_id="slow-nodes",
-        scope=PathologyScope(target_type="node", filter_id=None, percentage=1.0),
+    disturbance = Disturbance(
+        disturbance_id="slow-nodes",
+        scope=DisturbanceScope(target_type="node", filter_id=None, percentage=1.0),
         node_effects={"latency_multiplier": 10.0},
     )
-    engine.add_timed_pathology(TimedPathology(pathology=pathology, inject_at=5.0))
+    engine.add_timed_disturbance(TimedDisturbance(disturbance=disturbance, inject_at=5.0))
     engine.run(10.0)
     before = engine.buffer.window(0.0, 5.0)
     after = engine.buffer.window(5.0, 10.0)

@@ -7,6 +7,7 @@ from scrutable.profiles import (
     HIGH_VARIANCE_LATENCY,
     BURSTY_ERRORS,
     SLOW_RELIABLE,
+    LATENCY_VARIANCE_SPECTRUM,
 )
 
 
@@ -49,6 +50,32 @@ def test_catalog_constants_have_correct_names():
     assert HIGH_VARIANCE_LATENCY.name == "high_variance_latency"
     assert BURSTY_ERRORS.name == "bursty_errors"
     assert SLOW_RELIABLE.name == "slow_reliable"
+
+
+def test_latency_variance_spectrum_has_five_profiles():
+    assert len(LATENCY_VARIANCE_SPECTRUM) == 5
+
+
+def test_latency_variance_spectrum_ordered_by_increasing_sigma():
+    sigmas = [p.latency_sigma.lognormal_sigma for p in LATENCY_VARIANCE_SPECTRUM]
+    assert sigmas == sorted(sigmas)
+
+
+def test_latency_variance_spectrum_profiles_have_equal_median():
+    medians = [p.latency_median.lognormal_mean for p in LATENCY_VARIANCE_SPECTRUM]
+    assert len(set(medians)) == 1
+
+
+def test_latency_variance_spectrum_samples_ordered_by_variance():
+    rng = np.random.default_rng(0)
+    stds = []
+    for profile in LATENCY_VARIANCE_SPECTRUM:
+        latencies = [
+            sample_workload(profile, f"wl-{i}", np.random.default_rng(i)).latency_sigma
+            for i in range(200)
+        ]
+        stds.append(float(np.std(latencies)))
+    assert stds == sorted(stds)
 
 
 def test_error_shape_clamped_to_minimum():

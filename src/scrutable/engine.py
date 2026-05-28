@@ -1,12 +1,12 @@
 from __future__ import annotations
 import numpy as np
 from scrutable.event_loop import EventLoop
-from scrutable.infrastructure import InfrastructureModel
+from scrutable.plant import Plant
 from scrutable.workload import WorkloadRegistry
-from scrutable.buffer import ResponseBuffer
+from scrutable.observations import ObservationBuffer
 from scrutable.simulator import ServiceSimulator
-from scrutable.synthesizer import SynthesizerConfig, WorkloadSynthesizer
-from scrutable.pathology import PathologyInjector, TimedPathology, StochasticPathology
+from scrutable.synthesizer import InputConfig, InputSynthesizer
+from scrutable.disturbance import DisturbanceInjector, TimedDisturbance, StochasticDisturbance
 from scrutable.operations import RolloutSystem, OperationsSystem, SoftwareVersion
 from scrutable.detector import Detector
 from scrutable.actuator import Actuator
@@ -16,9 +16,9 @@ from scrutable.models import WorkloadState
 class SimulationEngine:
     def __init__(
         self,
-        infra: InfrastructureModel,
+        infra: Plant,
         registry: WorkloadRegistry,
-        synth_config: SynthesizerConfig,
+        synth_config: InputConfig,
         versions: dict[str, SoftwareVersion] | None = None,
         seed: int | None = None,
     ) -> None:
@@ -28,14 +28,14 @@ class SimulationEngine:
         self._workload_states: dict[str, WorkloadState] = {
             wid: WorkloadState(wid) for wid in registry.all_ids()
         }
-        self._buffer = ResponseBuffer()
+        self._buffer = ObservationBuffer()
         self._simulator = ServiceSimulator(
             self._loop, infra, registry, self._workload_states, self._buffer, self._rng
         )
-        self._synthesizer = WorkloadSynthesizer(
+        self._synthesizer = InputSynthesizer(
             synth_config, self._loop, self._simulator, self._rng
         )
-        self._injector = PathologyInjector(
+        self._injector = DisturbanceInjector(
             self._loop, infra, self._workload_states, self._rng
         )
         self._rollouts = RolloutSystem(versions or {}, infra, self._workload_states)
@@ -54,14 +54,14 @@ class SimulationEngine:
     def add_actuator(self, actuator: Actuator) -> None:
         self._actuators.append(actuator)
 
-    def add_timed_pathology(self, tp: TimedPathology) -> None:
-        self._injector.add_timed(tp)
+    def add_timed_disturbance(self, td: TimedDisturbance) -> None:
+        self._injector.add_timed(td)
 
-    def add_stochastic_pathology(self, sp: StochasticPathology) -> None:
-        self._injector.add_stochastic(sp)
+    def add_stochastic_disturbance(self, sd: StochasticDisturbance) -> None:
+        self._injector.add_stochastic(sd)
 
     @property
-    def buffer(self) -> ResponseBuffer:
+    def buffer(self) -> ObservationBuffer:
         return self._buffer
 
     @property

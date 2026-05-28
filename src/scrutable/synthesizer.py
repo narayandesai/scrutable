@@ -7,14 +7,14 @@ from scrutable.models import Request
 
 
 @dataclass
-class SynthesizerConfig:
+class InputConfig:
     workload_rates: dict[str, float]   # workload_id -> requests per second
 
 
-class WorkloadSynthesizer:
+class InputSynthesizer:
     def __init__(
         self,
-        config: SynthesizerConfig,
+        config: InputConfig,
         loop: EventLoop,
         simulator: ServiceSimulator,
         rng: np.random.Generator,

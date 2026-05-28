@@ -39,9 +39,9 @@ def build_response():
 
 @pytest.fixture
 def tiny_infra():
-    from scrutable.infrastructure import InfrastructureConfig, InfrastructureModel
+    from scrutable.plant import PlantConfig, Plant
 
-    config = InfrastructureConfig(
+    config = PlantConfig(
         regions=["r1", "r2"],
         clusters={"r1": ["r1c1", "r1c2"], "r2": ["r2c1", "r2c2"]},
         nodes={
@@ -51,4 +51,4 @@ def tiny_infra():
             "r2c2": ["r2c2n1", "r2c2n2", "r2c2n3"],
         },
     )
-    return InfrastructureModel(config)
+    return Plant(config)

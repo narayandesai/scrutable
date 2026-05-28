@@ -5,8 +5,8 @@ from scrutable.models import (
     ClusterState,
     Request,
     Response,
-    PathologyScope,
-    Pathology,
+    DisturbanceScope,
+    Disturbance,
     Inference,
 )
 
@@ -60,19 +60,19 @@ def test_response_fields():
     assert r.error_code == 0
 
 
-def test_pathology_scope_defaults():
-    s = PathologyScope(target_type="node", filter_id=None)
+def test_disturbance_scope_defaults():
+    s = DisturbanceScope(target_type="node", filter_id=None)
     assert s.percentage == 1.0
 
 
-def test_pathology_fields():
-    p = Pathology(
-        pathology_id="p1",
-        scope=PathologyScope(target_type="node", filter_id=None),
+def test_disturbance_fields():
+    d = Disturbance(
+        disturbance_id="d1",
+        scope=DisturbanceScope(target_type="node", filter_id=None),
         node_effects={"latency_multiplier": 2.0},
         workload_effects={},
     )
-    assert p.node_effects["latency_multiplier"] == 2.0
+    assert d.node_effects["latency_multiplier"] == 2.0
 
 
 def test_inference_fields():

@@ -55,16 +55,16 @@ class Response:
 
 
 @dataclass
-class PathologyScope:
+class DisturbanceScope:
     target_type: str
     filter_id: str | None
     percentage: float = 1.0
 
 
 @dataclass
-class Pathology:
-    pathology_id: str
-    scope: PathologyScope
+class Disturbance:
+    disturbance_id: str
+    scope: DisturbanceScope
     node_effects: dict = field(default_factory=dict)
     workload_effects: dict = field(default_factory=dict)
 

@@ -4,14 +4,14 @@ from scrutable.models import NodeState, ClusterState
 
 
 @dataclass
-class InfrastructureConfig:
+class PlantConfig:
     regions: list[str]
     clusters: dict[str, list[str]]   # region_id -> [cluster_id]
     nodes: dict[str, list[str]]       # cluster_id -> [node_id]
 
 
-class InfrastructureModel:
-    def __init__(self, config: InfrastructureConfig) -> None:
+class Plant:
+    def __init__(self, config: PlantConfig) -> None:
         self.regions: list[str] = config.regions
         self._clusters: dict[str, ClusterState] = {}
         self._nodes: dict[str, NodeState] = {}

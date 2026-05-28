@@ -1,10 +1,10 @@
 import numpy as np
 from scrutable.event_loop import EventLoop
-from scrutable.buffer import ResponseBuffer
+from scrutable.observations import ObservationBuffer
 from scrutable.models import WorkloadModel, WorkloadState
 from scrutable.workload import WorkloadRegistry
 from scrutable.simulator import ServiceSimulator
-from scrutable.synthesizer import SynthesizerConfig, WorkloadSynthesizer
+from scrutable.synthesizer import InputConfig, InputSynthesizer
 
 
 def _make_synth(tiny_infra, rates, seed=42):
@@ -22,11 +22,11 @@ def _make_synth(tiny_infra, rates, seed=42):
             )
         )
     workload_states = {wid: WorkloadState(workload_id=wid) for wid in rates}
-    buffer = ResponseBuffer()
+    buffer = ObservationBuffer()
     rng = np.random.default_rng(seed)
     sim = ServiceSimulator(loop, tiny_infra, registry, workload_states, buffer, rng)
-    config = SynthesizerConfig(workload_rates=rates)
-    synth = WorkloadSynthesizer(config, loop, sim, rng)
+    config = InputConfig(workload_rates=rates)
+    synth = InputSynthesizer(config, loop, sim, rng)
     return loop, synth, buffer
 
 

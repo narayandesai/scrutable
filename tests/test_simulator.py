@@ -1,6 +1,6 @@
 import numpy as np
 from scrutable.event_loop import EventLoop
-from scrutable.buffer import ResponseBuffer
+from scrutable.observations import ObservationBuffer as ResponseBuffer
 from scrutable.models import Request, WorkloadModel, WorkloadState
 from scrutable.workload import WorkloadRegistry
 from scrutable.simulator import ServiceSimulator

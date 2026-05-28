@@ -1,7 +1,7 @@
 from scrutable.engine import SimulationEngine
-from scrutable.infrastructure import InfrastructureConfig, InfrastructureModel
+from scrutable.plant import PlantConfig, Plant
 from scrutable.workload import WorkloadRegistry
-from scrutable.synthesizer import SynthesizerConfig
+from scrutable.synthesizer import InputConfig
 from scrutable.models import (
     WorkloadModel,
     WorkloadState,
@@ -9,11 +9,11 @@ from scrutable.models import (
     ClusterState,
     Request,
     Response,
-    Pathology,
-    PathologyScope,
+    Disturbance,
+    DisturbanceScope,
     Inference,
 )
-from scrutable.pathology import TimedPathology, StochasticPathology
+from scrutable.disturbance import TimedDisturbance, StochasticDisturbance
 from scrutable.operations import SoftwareVersion, RolloutSystem, OperationsSystem
 from scrutable.detector import Detector
 from scrutable.actuator import Actuator
@@ -25,25 +25,26 @@ from scrutable.profiles import (
     HIGH_VARIANCE_LATENCY,
     BURSTY_ERRORS,
     SLOW_RELIABLE,
+    LATENCY_VARIANCE_SPECTRUM,
 )
 
 __all__ = [
     "SimulationEngine",
-    "InfrastructureConfig",
-    "InfrastructureModel",
+    "PlantConfig",
+    "Plant",
     "WorkloadRegistry",
-    "SynthesizerConfig",
+    "InputConfig",
     "WorkloadModel",
     "WorkloadState",
     "NodeState",
     "ClusterState",
     "Request",
     "Response",
-    "Pathology",
-    "PathologyScope",
+    "Disturbance",
+    "DisturbanceScope",
     "Inference",
-    "TimedPathology",
-    "StochasticPathology",
+    "TimedDisturbance",
+    "StochasticDisturbance",
     "SoftwareVersion",
     "RolloutSystem",
     "OperationsSystem",
@@ -56,4 +57,5 @@ __all__ = [
     "HIGH_VARIANCE_LATENCY",
     "BURSTY_ERRORS",
     "SLOW_RELIABLE",
+    "LATENCY_VARIANCE_SPECTRUM",
 ]

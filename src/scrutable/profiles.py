@@ -73,3 +73,29 @@ SLOW_RELIABLE = WorkloadProfile(
     error_shape=FieldDist(lognormal_mean=math.log(1.5), lognormal_sigma=0.1),
     noise_sigma=FieldDist(lognormal_mean=math.log(0.02), lognormal_sigma=0.3),
 )
+
+# Five profiles sharing identical median/error/noise parameters, varying only in
+# latency_sigma. Used to demonstrate SLO threshold SNR degradation across the
+# variance spectrum.
+_SPECTRUM_MEDIAN   = FieldDist(lognormal_mean=math.log(0.1), lognormal_sigma=0.0)
+_SPECTRUM_ERROR    = FieldDist(lognormal_mean=math.log(5000), lognormal_sigma=0.0)
+_SPECTRUM_SHAPE    = FieldDist(lognormal_mean=math.log(1.5), lognormal_sigma=0.0)
+_SPECTRUM_NOISE    = FieldDist(lognormal_mean=math.log(0.005), lognormal_sigma=0.0)
+
+def _spectrum_profile(name: str, sigma: float) -> WorkloadProfile:
+    return WorkloadProfile(
+        name=name,
+        latency_median=_SPECTRUM_MEDIAN,
+        latency_sigma=FieldDist(lognormal_mean=math.log(0.2), lognormal_sigma=sigma),
+        error_scale=_SPECTRUM_ERROR,
+        error_shape=_SPECTRUM_SHAPE,
+        noise_sigma=_SPECTRUM_NOISE,
+    )
+
+LATENCY_VARIANCE_SPECTRUM: list[WorkloadProfile] = [
+    _spectrum_profile("variance_v1", sigma=0.05),
+    _spectrum_profile("variance_v2", sigma=0.2),
+    _spectrum_profile("variance_v3", sigma=0.4),
+    _spectrum_profile("variance_v4", sigma=0.7),
+    _spectrum_profile("variance_v5", sigma=1.1),
+]

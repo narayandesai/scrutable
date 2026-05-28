@@ -1,5 +1,5 @@
 import pytest
-from scrutable.infrastructure import InfrastructureConfig, InfrastructureModel
+from scrutable.plant import PlantConfig, Plant
 
 
 def test_enabled_clusters_returns_all_by_default(tiny_infra):

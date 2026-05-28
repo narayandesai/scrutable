@@ -1,9 +1,9 @@
 from __future__ import annotations
 import numpy as np
 from scrutable.event_loop import EventLoop
-from scrutable.infrastructure import InfrastructureModel
+from scrutable.plant import Plant
 from scrutable.workload import WorkloadRegistry, sample_latency, sample_error_code
-from scrutable.buffer import ResponseBuffer
+from scrutable.observations import ObservationBuffer
 from scrutable.models import Request, Response, WorkloadState
 
 _NO_CLUSTER_ERROR = 503
@@ -13,21 +13,21 @@ class ServiceSimulator:
     def __init__(
         self,
         loop: EventLoop,
-        infra: InfrastructureModel,
+        plant: Plant,
         registry: WorkloadRegistry,
         workload_states: dict[str, WorkloadState],
-        buffer: ResponseBuffer,
+        buffer: ObservationBuffer,
         rng: np.random.Generator,
     ) -> None:
         self._loop = loop
-        self._infra = infra
+        self._plant = plant
         self._registry = registry
         self._workload_states = workload_states
         self._buffer = buffer
         self._rng = rng
 
     def handle_request(self, request: Request) -> None:
-        enabled = self._infra.enabled_clusters()
+        enabled = self._plant.enabled_clusters()
         if not enabled:
             # Safe: at event time T=issued_at, all prior arrivals are already buffered; latency=0 keeps order
             self._buffer.append(
@@ -45,7 +45,7 @@ class ServiceSimulator:
             return
 
         cluster = enabled[int(self._rng.integers(len(enabled)))]
-        node_ids = self._infra.nodes_in_cluster(cluster.cluster_id)
+        node_ids = self._plant.nodes_in_cluster(cluster.cluster_id)
         if not node_ids:
             # Safe: at event time T=issued_at, all prior arrivals are already buffered; latency=0 keeps order
             self._buffer.append(
@@ -62,7 +62,7 @@ class ServiceSimulator:
             )
             return
         node_id = node_ids[int(self._rng.integers(len(node_ids)))]
-        node_state = self._infra.get_node(node_id)
+        node_state = self._plant.get_node(node_id)
 
         model = self._registry.get(request.workload_id)
         wstate = self._workload_states.get(

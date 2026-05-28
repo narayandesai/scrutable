@@ -25,7 +25,7 @@ def build_registry(rng: np.random.Generator) -> tuple[sc.WorkloadRegistry, dict[
 def main() -> None:
     rng = np.random.default_rng(SEED)
 
-    infra_config = sc.InfrastructureConfig(
+    plant_config = sc.PlantConfig(
         regions=["r1", "r2"],
         clusters={"r1": ["r1c1", "r1c2"], "r2": ["r2c1", "r2c2"]},
         nodes={
@@ -35,16 +35,16 @@ def main() -> None:
             "r2c2": ["r2c2n1", "r2c2n2", "r2c2n3"],
         },
     )
-    infra = sc.InfrastructureModel(infra_config)
+    plant = sc.Plant(plant_config)
 
     registry, rates = build_registry(rng)
     total_workloads = len(PROFILES) * WORKLOADS_PER_PROFILE
     total_rate = total_workloads * RATE_PER_WORKLOAD
 
     engine = sc.SimulationEngine(
-        infra=infra,
+        infra=plant,
         registry=registry,
-        synth_config=sc.SynthesizerConfig(workload_rates=rates),
+        synth_config=sc.InputConfig(workload_rates=rates),
         seed=SEED,
     )
     engine.run(DURATION)
@@ -68,7 +68,7 @@ def main() -> None:
         print(f"Latency:        p50={p50:.3f}s  p95={p95:.3f}s  p99={p99:.3f}s")
     print(f"Errors:         {errors:,} ({errors / len(responses) * 100:.1f}%)" if responses else "Errors:         0")
 
-    # TODO Scenario B: inject a timed pathology at T=10 and observe latency/error signal
+    # TODO Scenario B: inject a timed disturbance at T=10 and observe latency/error signal
     # TODO Scenario C: add a Detector and Actuator to close the detection/remediation loop
 
 

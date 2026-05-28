@@ -3,7 +3,7 @@ import bisect
 from scrutable.models import Response
 
 
-class ResponseBuffer:
+class ObservationBuffer:
     def __init__(self) -> None:
         self._responses: list[Response] = []
         self._arrivals: list[float] = []  # issued_at + latency, kept sorted
