@@ -2,7 +2,7 @@ from __future__ import annotations
 import numpy as np
 from scrutable.event_loop import EventLoop
 from scrutable.plant import Plant
-from scrutable.workload import WorkloadRegistry, sample_latency, sample_error_code
+from scrutable.workload import WorkloadRegistry, _SampleBuffer, sample_latency, sample_error_code
 from scrutable.observations import ObservationBuffer
 from scrutable.models import Request, Response, WorkloadState
 
@@ -24,7 +24,7 @@ class ServiceSimulator:
         self._registry = registry
         self._workload_states = workload_states
         self._buffer = buffer
-        self._rng = rng
+        self._rng: _SampleBuffer = _SampleBuffer(rng)
 
     def handle_request(self, request: Request) -> None:
         enabled = self._plant.enabled_clusters()

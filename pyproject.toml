@@ -22,3 +22,5 @@ build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not slow'"
+markers = ["slow: simulation-backed integration tests (deselect with -m 'not slow')"]

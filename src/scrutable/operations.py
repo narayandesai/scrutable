@@ -43,7 +43,7 @@ class OperationsSystem:
         self._plant = plant
 
     def drain(self, cluster_id: str) -> None:
-        self._plant.get_cluster(cluster_id).traffic_enabled = False
+        self._plant.set_cluster_enabled(cluster_id, False)
 
     def restore(self, cluster_id: str) -> None:
-        self._plant.get_cluster(cluster_id).traffic_enabled = True
+        self._plant.set_cluster_enabled(cluster_id, True)

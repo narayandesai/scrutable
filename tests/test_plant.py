@@ -50,3 +50,19 @@ def test_node_mutation_persists(tiny_infra):
 def test_unknown_node_raises(tiny_infra):
     with pytest.raises(KeyError):
         tiny_infra.get_node("nonexistent")
+
+
+def test_set_cluster_enabled_reflects_in_enabled_clusters(tiny_infra):
+    tiny_infra.set_cluster_enabled("r1c1", False)
+    enabled_ids = {c.cluster_id for c in tiny_infra.enabled_clusters()}
+    assert "r1c1" not in enabled_ids
+    tiny_infra.set_cluster_enabled("r1c1", True)
+    enabled_ids = {c.cluster_id for c in tiny_infra.enabled_clusters()}
+    assert "r1c1" in enabled_ids
+
+
+def test_enabled_clusters_cache_invalidated_on_set(tiny_infra):
+    first = tiny_infra.enabled_clusters()
+    tiny_infra.set_cluster_enabled("r1c1", False)
+    second = tiny_infra.enabled_clusters()
+    assert len(second) == len(first) - 1

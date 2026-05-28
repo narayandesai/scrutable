@@ -126,3 +126,47 @@ def test_sample_latency_addend_increases_latency(model, neutral_wstate):
     baseline = np.mean([sample_latency(model, neutral_wstate, nstate_no_addend, rng1) for _ in range(100)])
     elevated = np.mean([sample_latency(model, neutral_wstate, nstate_with_addend, rng2) for _ in range(100)])
     assert elevated > baseline + 0.9
+
+
+def test_sample_buffer_lognormal_positive():
+    from scrutable.workload import _SampleBuffer
+    buf = _SampleBuffer(np.random.default_rng(0))
+    vals = [buf.lognormal(np.log(0.1), 0.3) for _ in range(200)]
+    assert all(v > 0 for v in vals)
+
+
+def test_sample_buffer_lognormal_mean_plausible():
+    from scrutable.workload import _SampleBuffer
+    buf = _SampleBuffer(np.random.default_rng(0))
+    vals = [buf.lognormal(np.log(0.1), 0.1) for _ in range(2000)]
+    assert 0.08 < np.median(vals) < 0.12
+
+
+def test_sample_buffer_normal_mean_near_loc():
+    from scrutable.workload import _SampleBuffer
+    buf = _SampleBuffer(np.random.default_rng(0))
+    vals = [buf.normal(0.0, 0.01) for _ in range(2000)]
+    assert abs(np.mean(vals)) < 0.001
+
+
+def test_sample_buffer_batches_are_independent():
+    from scrutable.workload import _SampleBuffer
+    # Two buffers with same seed should produce identical values
+    b1 = _SampleBuffer(np.random.default_rng(42))
+    b2 = _SampleBuffer(np.random.default_rng(42))
+    v1 = [b1.lognormal(0.0, 0.3) for _ in range(50)]
+    v2 = [b2.lognormal(0.0, 0.3) for _ in range(50)]
+    assert v1 == v2
+
+
+def test_weibull_early_exit_returns_zero_at_very_small_t():
+    from scrutable.workload import _weibull_cdf
+    # t << scale: CDF should be effectively zero and early-exit path taken
+    assert _weibull_cdf(0.001, scale=5000.0, shape=1.5) == 0.0
+
+
+def test_sample_error_code_zero_at_very_early_time(model, neutral_wstate, neutral_nstate):
+    rng = np.random.default_rng(0)
+    results = [sample_error_code(model, neutral_wstate, neutral_nstate, rng, sim_time=0.001)
+               for _ in range(100)]
+    assert all(r == 0 for r in results)

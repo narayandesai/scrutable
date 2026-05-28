@@ -16,6 +16,7 @@ class Plant:
         self._clusters: dict[str, ClusterState] = {}
         self._nodes: dict[str, NodeState] = {}
         self._cluster_to_nodes: dict[str, list[str]] = {}
+        self._enabled_cache: list[ClusterState] | None = None
 
         for region_id, cluster_ids in config.clusters.items():
             for cluster_id in cluster_ids:
@@ -35,8 +36,14 @@ class Plant:
     def get_node(self, node_id: str) -> NodeState:
         return self._nodes[node_id]
 
+    def set_cluster_enabled(self, cluster_id: str, enabled: bool) -> None:
+        self._clusters[cluster_id].traffic_enabled = enabled
+        self._enabled_cache = None
+
     def enabled_clusters(self) -> list[ClusterState]:
-        return [c for c in self._clusters.values() if c.traffic_enabled]
+        if self._enabled_cache is None:
+            self._enabled_cache = [c for c in self._clusters.values() if c.traffic_enabled]
+        return self._enabled_cache
 
     def nodes_in_cluster(self, cluster_id: str) -> list[str]:
         return self._cluster_to_nodes[cluster_id]

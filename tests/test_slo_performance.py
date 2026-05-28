@@ -3,6 +3,8 @@ import pytest
 from scrutable.profiles import LATENCY_VARIANCE_SPECTRUM
 from scrutable.scenarios.slo_performance import PerformancePoint, sweep_slo_performance
 
+pytestmark = pytest.mark.slow
+
 
 def test_sweep_returns_one_point_per_profile_window_pair():
     profiles = LATENCY_VARIANCE_SPECTRUM[:2]

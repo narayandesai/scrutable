@@ -1,6 +1,9 @@
 import numpy as np
+import pytest
 from scrutable.profiles import LATENCY_VARIANCE_SPECTRUM
 from scrutable.scenarios.slo_spectrum import run_slo_scenario, ScenarioResult, TimeWindow
+
+pytestmark = pytest.mark.slow
 
 
 def test_run_slo_scenario_returns_result():
