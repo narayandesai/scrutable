@@ -39,12 +39,11 @@ PROFILE_COLORS = [
 
 def build_figure(results) -> go.Figure:
     fig = make_subplots(
-        rows=1, cols=2,
-        subplot_titles=["Recall vs window size", "False positive rate vs window size"],
-        horizontal_spacing=0.12,
+        rows=1, cols=3,
+        subplot_titles=["Recall", "Precision", "False positive rate"],
+        horizontal_spacing=0.10,
     )
 
-    profiles_seen: list[str] = []
     by_profile: dict[str, list] = {}
     for pt in results:
         by_profile.setdefault(pt.profile_name, []).append(pt)
@@ -52,33 +51,28 @@ def build_figure(results) -> go.Figure:
     for idx, (name, pts) in enumerate(by_profile.items()):
         pts_sorted = sorted(pts, key=lambda p: p.window_size)
         xs = [p.window_size for p in pts_sorted]
-        recalls = [p.recall for p in pts_sorted]
-        fprs = [p.fpr for p in pts_sorted]
         color = PROFILE_COLORS[idx % len(PROFILE_COLORS)]
         sigma = pts_sorted[0].sigma
         label = f"{name} (σ={sigma:.1f})"
-        show = True
 
-        fig.add_trace(go.Scatter(
-            x=xs, y=recalls, mode="lines+markers",
-            name=label, line=dict(color=color, width=2),
-            marker=dict(size=7), showlegend=show, legendgroup=name,
-        ), row=1, col=1)
-
-        fig.add_trace(go.Scatter(
-            x=xs, y=fprs, mode="lines+markers",
-            name=label, line=dict(color=color, width=2),
-            marker=dict(size=7), showlegend=False, legendgroup=name,
-        ), row=1, col=2)
+        for col, ys in enumerate([[p.recall for p in pts_sorted],
+                                   [p.precision for p in pts_sorted],
+                                   [p.fpr for p in pts_sorted]], start=1):
+            fig.add_trace(go.Scatter(
+                x=xs, y=ys, mode="lines+markers",
+                name=label, line=dict(color=color, width=2),
+                marker=dict(size=7), showlegend=(col == 1), legendgroup=name,
+            ), row=1, col=col)
 
     fig.update_xaxes(title_text="Window size (s)", type="log")
     fig.update_yaxes(title_text="Recall", range=[0, 1.05], row=1, col=1)
-    fig.update_yaxes(title_text="False positive rate", range=[-0.02, 1.05], row=1, col=2)
+    fig.update_yaxes(title_text="Precision", range=[0, 1.05], row=1, col=2)
+    fig.update_yaxes(title_text="False positive rate", range=[-0.02, 1.05], row=1, col=3)
     fig.update_layout(
         height=500,
         title=dict(
             text=(
-                "SLO Detection Performance: Recall and FPR vs Window Size<br>"
+                "SLO Detection Performance vs Window Size<br>"
                 f"<sup>Additive disturbance +0.8s on 50% of nodes  |  "
                 f"Threshold calibrated on full burn-in (2× P99.9)  |  "
                 f"Rate={int(RATE * N_WORKLOADS)} req/s  |  burn-in={BURN_IN}s</sup>"
@@ -115,9 +109,9 @@ def main() -> None:
     )
 
     print("\nResults:")
-    print(f"{'Profile':<16} {'W':>6} {'Recall':>8} {'FPR':>8}")
+    print(f"{'Profile':<16} {'W':>6} {'Recall':>8} {'Precision':>10} {'FPR':>8}")
     for pt in results:
-        print(f"{pt.profile_name:<16} {pt.window_size:>6.1f} {pt.recall:>8.2f} {pt.fpr:>8.2f}")
+        print(f"{pt.profile_name:<16} {pt.window_size:>6.1f} {pt.recall:>8.2f} {pt.precision:>10.2f} {pt.fpr:>8.2f}")
 
     fig = build_figure(results)
 

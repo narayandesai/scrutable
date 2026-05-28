@@ -17,8 +17,9 @@ class PerformancePoint:
     profile_name: str
     sigma: float          # latency_sigma of the profile (diagnostic label)
     window_size: float    # SloTarget window_size used
-    fpr: float            # false positive rate: fraction of burn-in windows that fired
-    recall: float         # fraction of post-disturbance windows that fired
+    precision: float      # TP / (TP + FP): fraction of alerts that fired on disturbance windows
+    recall: float         # TP / (TP + FN): fraction of disturbance windows that fired
+    fpr: float            # FP / (FP + TN): fraction of clean windows that fired
     mean_detection_latency: float | None  # seconds after disturbance_at, None if recall=0
 
 
@@ -85,10 +86,10 @@ def _run_one(
     )
     detector = LatencySloDetector(detector_id="perf", target=detection_target, tick_interval=window_size)
 
-    burn_in_alerts = 0
-    burn_in_windows = 0
-    post_alerts = 0
-    post_windows = 0
+    tp = 0
+    fp = 0
+    tn = 0
+    fn = 0
     detection_latencies: list[float] = []
 
     t = 0.0
@@ -96,19 +97,24 @@ def _run_one(
         responses = buf.window(t, t + window_size)
         if responses:
             fired = bool(detector.detect(responses))
-            if t + window_size <= burn_in:
-                burn_in_windows += 1
+            # disturbance window if any overlap with [burn_in, total_duration)
+            is_disturbance = t + window_size > burn_in
+            if is_disturbance:
                 if fired:
-                    burn_in_alerts += 1
-            elif t >= burn_in:
-                post_windows += 1
+                    tp += 1
+                    detection_latencies.append(max(0.0, t - burn_in))
+                else:
+                    fn += 1
+            else:
                 if fired:
-                    post_alerts += 1
-                    detection_latencies.append(t - burn_in)
+                    fp += 1
+                else:
+                    tn += 1
         t += window_size
 
-    fpr = burn_in_alerts / burn_in_windows if burn_in_windows > 0 else 0.0
-    recall = post_alerts / post_windows if post_windows > 0 else 0.0
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 1.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    fpr = fp / (fp + tn) if (fp + tn) > 0 else 0.0
     mean_det = float(np.mean(detection_latencies)) if detection_latencies else None
 
     # extract sigma from profile (deterministic profiles have lognormal_sigma=0)
@@ -119,8 +125,9 @@ def _run_one(
         profile_name=profile.name,
         sigma=sigma,
         window_size=window_size,
-        fpr=fpr,
+        precision=precision,
         recall=recall,
+        fpr=fpr,
         mean_detection_latency=mean_det,
     )
 
