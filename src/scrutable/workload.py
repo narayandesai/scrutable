@@ -10,10 +10,10 @@ class _SampleBuffer:
 
     def __init__(self, rng: np.random.Generator) -> None:
         self._rng = rng
-        self._normals: np.ndarray = np.empty(0)
-        self._uniforms: np.ndarray = np.empty(0)
-        self._ni = 0
-        self._ui = 0
+        self._normals: np.ndarray = np.empty(_BATCH)
+        self._uniforms: np.ndarray = np.empty(_BATCH)
+        self._ni = _BATCH
+        self._ui = _BATCH
 
     def _refill_normals(self) -> None:
         self._normals = self._rng.standard_normal(_BATCH)
@@ -24,28 +24,32 @@ class _SampleBuffer:
         self._ui = 0
 
     def lognormal(self, mean: float, sigma: float) -> float:
-        if self._ni >= len(self._normals):
+        if self._ni >= _BATCH:
             self._refill_normals()
         z = self._normals[self._ni]
         self._ni += 1
         return float(np.exp(mean + sigma * z))
 
     def normal(self, loc: float, scale: float) -> float:
-        if self._ni >= len(self._normals):
+        if self._ni >= _BATCH:
             self._refill_normals()
         z = self._normals[self._ni]
         self._ni += 1
         return float(loc + scale * z)
 
     def random(self) -> float:
-        if self._ui >= len(self._uniforms):
+        if self._ui >= _BATCH:
             self._refill_uniforms()
         v = self._uniforms[self._ui]
         self._ui += 1
         return float(v)
 
     def integers(self, n: int) -> int:
-        return int(self._rng.integers(n))
+        if self._ui >= _BATCH:
+            self._refill_uniforms()
+        v = self._uniforms[self._ui]
+        self._ui += 1
+        return int(v * n)
 
 
 def _weibull_cdf(t: float, scale: float, shape: float) -> float:
