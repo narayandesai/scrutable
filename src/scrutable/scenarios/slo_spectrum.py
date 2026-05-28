@@ -8,7 +8,7 @@ from scrutable.disturbance import TimedDisturbance
 from scrutable.synthesizer import InputConfig
 from scrutable.engine import SimulationEngine
 from scrutable.profiles import WorkloadProfile, sample_workload
-from scrutable.detectors.slo import BurnInCalibrator, LatencySloDetector
+from scrutable.detectors.slo import BurnInCalibrator, LatencySloDetector, SloTarget
 
 
 @dataclass
@@ -98,23 +98,15 @@ def run_slo_scenario(
     ))
 
     total_duration = burn_in + post_disturbance
-    detector = LatencySloDetector(
-        detector_id="slo",
-        thresholds=None,  # placeholder — calibrated after burn-in below
-        window_size=window_size,
-        tick_interval=window_size,
-    )
-
     engine.run(total_duration)
 
     buf = engine.buffer
-    calibrator = BurnInCalibrator(window_size=burn_in, multiplier=2.0)
-    thresholds = calibrator.calibrate(buf, burn_in_end=burn_in)
+    calibrator = BurnInCalibrator(multiplier=2.0)
+    target = calibrator.calibrate(buf, burn_in_end=burn_in, percentile=99.9, window_size=window_size)
 
     detector_calibrated = LatencySloDetector(
         detector_id="slo",
-        thresholds=thresholds,
-        window_size=window_size,
+        target=target,
         tick_interval=window_size,
     )
 
@@ -134,7 +126,7 @@ def run_slo_scenario(
     return ScenarioResult(
         profile_name=profile.name,
         windows=windows,
-        slo_threshold_p999=thresholds.p999_latency,
+        slo_threshold_p999=target.threshold,
         disturbance_at=burn_in,
         disturbance_addend=disturbance_addend,
         detection_time=detection_time,
