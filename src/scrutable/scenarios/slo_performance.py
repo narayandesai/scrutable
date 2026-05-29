@@ -20,7 +20,8 @@ class PerformancePoint:
     precision: float      # TP / (TP + FP): fraction of alerts that fired on disturbance windows
     recall: float         # TP / (TP + FN): fraction of disturbance windows that fired
     fpr: float            # FP / (FP + TN): fraction of clean windows that fired
-    mean_detection_latency: float | None  # seconds after disturbance_at, None if recall=0
+    mean_detection_latency: float | None   # mean seconds from disturbance to end of firing window
+    time_to_first_detection: float | None  # seconds from disturbance to end of first firing window
 
 
 def _make_plant() -> Plant:
@@ -91,6 +92,7 @@ def _run_one(
     tn = 0
     fn = 0
     detection_latencies: list[float] = []
+    time_to_first_detection: float | None = None
 
     t = 0.0
     while t + window_size <= total_duration:
@@ -102,7 +104,10 @@ def _run_one(
             if is_disturbance:
                 if fired:
                     tp += 1
-                    detection_latencies.append(max(0.0, t - burn_in))
+                    dl = (t + window_size) - burn_in
+                    detection_latencies.append(dl)
+                    if time_to_first_detection is None:
+                        time_to_first_detection = dl
                 else:
                     fn += 1
             else:
@@ -129,6 +134,7 @@ def _run_one(
         recall=recall,
         fpr=fpr,
         mean_detection_latency=mean_det,
+        time_to_first_detection=time_to_first_detection,
     )
 
 

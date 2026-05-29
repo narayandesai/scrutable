@@ -31,6 +31,35 @@ def test_performance_point_has_required_fields():
     assert 0.0 <= pt.fpr <= 1.0
     assert 0.0 <= pt.recall <= 1.0
     assert 0.0 <= pt.precision <= 1.0
+    assert pt.time_to_first_detection is None or pt.time_to_first_detection > 0.0
+
+
+def test_time_to_first_detection_near_window_size_for_strong_signal():
+    # v1 (sigma=0.1): strong signal, first window after disturbance should fire
+    # time_to_first_detection should be <= window_size (first overlapping window closes within W of injection)
+    profile = LATENCY_VARIANCE_SPECTRUM[0]
+    window_size = 2.0
+    results = sweep_slo_performance(
+        [profile], [window_size],
+        seed=42, rate=500.0, n_workloads=5,
+        burn_in=10.0, post_disturbance=20.0,
+    )
+    pt = results[0]
+    assert pt.time_to_first_detection is not None
+    assert pt.time_to_first_detection <= window_size
+
+
+def test_time_to_first_detection_none_when_no_detections():
+    # Very high multiplier, no disturbance: should never fire → time_to_first_detection is None
+    profile = LATENCY_VARIANCE_SPECTRUM[0]
+    results = sweep_slo_performance(
+        [profile], [1.0],
+        seed=42, rate=200.0, n_workloads=5,
+        burn_in=10.0, post_disturbance=10.0,
+        calibration_multiplier=100.0,
+    )
+    pt = results[0]
+    assert pt.time_to_first_detection is None
 
 
 def test_precision_is_one_when_no_false_positives():

@@ -109,9 +109,11 @@ def main() -> None:
     )
 
     print("\nResults:")
-    print(f"{'Profile':<16} {'W':>6} {'Recall':>8} {'Precision':>10} {'FPR':>8}")
+    print(f"{'Profile':<16} {'W':>6} {'Recall':>8} {'Prec':>6} {'FPR':>6} {'1st det':>8} {'mean det':>9}")
     for pt in results:
-        print(f"{pt.profile_name:<16} {pt.window_size:>6.1f} {pt.recall:>8.2f} {pt.precision:>10.2f} {pt.fpr:>8.2f}")
+        first = f"{pt.time_to_first_detection:.1f}s" if pt.time_to_first_detection is not None else "-"
+        mean = f"{pt.mean_detection_latency:.1f}s" if pt.mean_detection_latency is not None else "-"
+        print(f"{pt.profile_name:<16} {pt.window_size:>6.1f} {pt.recall:>8.2f} {pt.precision:>6.2f} {pt.fpr:>6.2f} {first:>8} {mean:>9}")
 
     fig = build_figure(results)
 
