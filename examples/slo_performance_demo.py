@@ -103,7 +103,7 @@ def main() -> None:
         seed=SEED,
         rate=RATE,
         n_workloads=N_WORKLOADS,
-        burn_in=BURN_IN,
+        calibration_duration=BURN_IN,
         post_disturbance=POST_DISTURBANCE,
         workers=args.workers,
     )

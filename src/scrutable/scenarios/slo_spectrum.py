@@ -8,7 +8,7 @@ from scrutable.disturbance import TimedDisturbance
 from scrutable.synthesizer import InputConfig
 from scrutable.engine import SimulationEngine
 from scrutable.profiles import WorkloadProfile, sample_workload
-from scrutable.detectors.slo import BurnInCalibrator, LatencySloDetector, SloTarget
+from scrutable.detectors.slo import LatencySloCalibrator, LatencySloDetector, SloTarget
 
 
 @dataclass
@@ -63,7 +63,7 @@ def run_slo_scenario(
     profile: WorkloadProfile,
     seed: int = 42,
     rate: float = 1000.0,       # req/s per workload
-    burn_in: float = 10.0,      # seconds of baseline before disturbance
+    calibration_duration: float = 10.0,  # seconds of baseline before disturbance
     post_disturbance: float = 20.0,  # seconds after disturbance injection
     n_workloads: int = 10,
     disturbance_addend: float = 1.0,  # additive latency penalty in seconds on affected nodes
@@ -94,15 +94,15 @@ def run_slo_scenario(
     )
     engine.add_timed_disturbance(TimedDisturbance(
         disturbance=disturbance,
-        inject_at=burn_in,
+        inject_at=calibration_duration,
     ))
 
-    total_duration = burn_in + post_disturbance
+    total_duration = calibration_duration + post_disturbance
     engine.run(total_duration)
 
     buf = engine.buffer
-    calibrator = BurnInCalibrator(multiplier=2.0)
-    target = calibrator.calibrate(buf, burn_in_end=burn_in, percentile=99.9, window_size=window_size)
+    calibrator = LatencySloCalibrator(multiplier=2.0)
+    target = calibrator.calibrate(buf, calibration_end=calibration_duration, percentile=99.9, window_size=window_size)
 
     detector_calibrated = LatencySloDetector(
         detector_id="slo",
@@ -117,7 +117,7 @@ def run_slo_scenario(
         tw = _compute_window(buf.window(t, t + window_size), t, t + window_size)
         if tw is not None:
             windows.append(tw)
-            if detection_time is None and t >= burn_in:
+            if detection_time is None and t >= calibration_duration:
                 inferences = detector_calibrated.detect(buf.window(t, t + window_size))
                 if inferences:
                     detection_time = t + window_size
@@ -127,7 +127,7 @@ def run_slo_scenario(
         profile_name=profile.name,
         windows=windows,
         slo_threshold_p999=target.threshold,
-        disturbance_at=burn_in,
+        disturbance_at=calibration_duration,
         disturbance_addend=disturbance_addend,
         detection_time=detection_time,
     )

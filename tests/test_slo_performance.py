@@ -12,7 +12,7 @@ def test_sweep_returns_one_point_per_profile_window_pair():
     results = sweep_slo_performance(
         profiles, window_sizes,
         seed=42, rate=200.0, n_workloads=5,
-        burn_in=10.0, post_disturbance=10.0,
+        calibration_duration=10.0, post_disturbance=10.0,
     )
     assert len(results) == len(profiles) * len(window_sizes)
 
@@ -22,7 +22,7 @@ def test_performance_point_has_required_fields():
     results = sweep_slo_performance(
         profiles, [1.0],
         seed=42, rate=200.0, n_workloads=5,
-        burn_in=10.0, post_disturbance=10.0,
+        calibration_duration=10.0, post_disturbance=10.0,
     )
     pt = results[0]
     assert isinstance(pt, PerformancePoint)
@@ -42,7 +42,7 @@ def test_time_to_first_detection_near_window_size_for_strong_signal():
     results = sweep_slo_performance(
         [profile], [window_size],
         seed=42, rate=500.0, n_workloads=5,
-        burn_in=10.0, post_disturbance=20.0,
+        calibration_duration=10.0, post_disturbance=20.0,
     )
     pt = results[0]
     assert pt.time_to_first_detection is not None
@@ -55,7 +55,7 @@ def test_time_to_first_detection_none_when_no_detections():
     results = sweep_slo_performance(
         [profile], [1.0],
         seed=42, rate=200.0, n_workloads=5,
-        burn_in=10.0, post_disturbance=10.0,
+        calibration_duration=10.0, post_disturbance=10.0,
         calibration_multiplier=100.0,
     )
     pt = results[0]
@@ -68,7 +68,7 @@ def test_precision_is_one_when_no_false_positives():
     results = sweep_slo_performance(
         [profile], [1.0],
         seed=42, rate=500.0, n_workloads=5,
-        burn_in=10.0, post_disturbance=20.0,
+        calibration_duration=10.0, post_disturbance=20.0,
         calibration_multiplier=5.0,
     )
     pt = results[0]
@@ -82,7 +82,7 @@ def test_precision_zero_when_no_true_positives_but_false_positives():
     results = sweep_slo_performance(
         [profile], [1.0],
         seed=42, rate=500.0, n_workloads=5,
-        burn_in=10.0, post_disturbance=10.0,
+        calibration_duration=10.0, post_disturbance=10.0,
         calibration_multiplier=0.5,  # fires constantly, in burn-in and post
         disturbance_addend=0.0,      # no actual disturbance signal
     )
@@ -98,7 +98,7 @@ def test_fpr_near_zero_with_high_multiplier():
     results = sweep_slo_performance(
         profiles, [1.0],
         seed=42, rate=500.0, n_workloads=10,
-        burn_in=10.0, post_disturbance=10.0,
+        calibration_duration=10.0, post_disturbance=10.0,
         calibration_multiplier=5.0,
     )
     assert results[0].fpr < 0.1
@@ -110,7 +110,7 @@ def test_recall_high_on_low_variance_profile():
     results = sweep_slo_performance(
         [profile], [1.0],
         seed=42, rate=500.0, n_workloads=10,
-        burn_in=10.0, post_disturbance=20.0,
+        calibration_duration=10.0, post_disturbance=20.0,
     )
     assert results[0].recall > 0.8
 
@@ -122,7 +122,7 @@ def test_recall_lower_on_high_variance_profile():
     results = sweep_slo_performance(
         [low_var, high_var], [1.0],
         seed=42, rate=200.0, n_workloads=10,
-        burn_in=60.0, post_disturbance=20.0,
+        calibration_duration=60.0, post_disturbance=20.0,
     )
     low_recall = next(r.recall for r in results if r.profile_name == low_var.name)
     high_recall = next(r.recall for r in results if r.profile_name == high_var.name)
@@ -132,7 +132,7 @@ def test_recall_lower_on_high_variance_profile():
 def test_sweep_parallel_matches_serial():
     profiles = LATENCY_VARIANCE_SPECTRUM[:2]
     window_sizes = [1.0, 2.0]
-    common = dict(seed=42, rate=200.0, n_workloads=5, burn_in=10.0, post_disturbance=10.0)
+    common = dict(seed=42, rate=200.0, n_workloads=5, calibration_duration=10.0, post_disturbance=10.0)
     serial = sweep_slo_performance(profiles, window_sizes, workers=1, **common)
     parallel = sweep_slo_performance(profiles, window_sizes, workers=2, **common)
     assert len(parallel) == len(serial)

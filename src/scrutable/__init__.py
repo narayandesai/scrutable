@@ -16,7 +16,10 @@ from scrutable.models import (
 from scrutable.disturbance import TimedDisturbance, StochasticDisturbance
 from scrutable.operations import SoftwareVersion, RolloutSystem, OperationsSystem
 from scrutable.detector import Detector
-from scrutable.detectors.slo import SloTarget, BurnInCalibrator, LatencySloDetector
+from scrutable.detectors.slo import (
+    SloTarget, LatencySloCalibrator, LatencySloDetector,
+    ErrorRateSloTarget, ErrorRateSloCalibrator, ErrorRateSloDetector,
+)
 from scrutable.actuator import Actuator
 from scrutable.profiles import (
     FieldDist,
@@ -52,8 +55,11 @@ __all__ = [
     "Detector",
     "Actuator",
     "SloTarget",
-    "BurnInCalibrator",
+    "LatencySloCalibrator",
     "LatencySloDetector",
+    "ErrorRateSloTarget",
+    "ErrorRateSloCalibrator",
+    "ErrorRateSloDetector",
     "FieldDist",
     "WorkloadProfile",
     "sample_workload",

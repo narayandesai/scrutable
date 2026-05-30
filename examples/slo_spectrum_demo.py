@@ -124,7 +124,7 @@ def main() -> None:
             profile,
             seed=SEED,
             rate=RATE,
-            burn_in=BURN_IN,
+            calibration_duration=BURN_IN,
             post_disturbance=POST_DISTURBANCE,
             n_workloads=N_WORKLOADS,
             disturbance_addend=DISTURBANCE_ADDEND,

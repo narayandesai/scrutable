@@ -9,7 +9,7 @@ from scrutable.disturbance import TimedDisturbance
 from scrutable.synthesizer import InputConfig
 from scrutable.engine import SimulationEngine
 from scrutable.profiles import WorkloadProfile, sample_workload
-from scrutable.detectors.slo import BurnInCalibrator, LatencySloDetector, SloTarget
+from scrutable.detectors.slo import LatencySloCalibrator, LatencySloDetector, SloTarget
 
 
 @dataclass
@@ -41,7 +41,7 @@ def _run_one(
     seed: int,
     rate: float,
     n_workloads: int,
-    burn_in: float,
+    calibration_duration: float,
     post_disturbance: float,
     disturbance_addend: float,
     disturbance_coverage: float,
@@ -70,16 +70,16 @@ def _run_one(
         scope=DisturbanceScope(target_type="node", filter_id=None, percentage=disturbance_coverage),
         node_effects={"latency_addend": disturbance_addend},
     )
-    engine.add_timed_disturbance(TimedDisturbance(disturbance=disturbance, inject_at=burn_in))
+    engine.add_timed_disturbance(TimedDisturbance(disturbance=disturbance, inject_at=calibration_duration))
 
-    total_duration = burn_in + post_disturbance
+    total_duration = calibration_duration + post_disturbance
     engine.run(total_duration)
 
     buf = engine.buffer
     # Calibrate on the full burn-in period to get a stable long-run threshold.
     # Detection window is varied independently — this is the tradeoff we're measuring.
-    calibrator = BurnInCalibrator(multiplier=calibration_multiplier)
-    calibrated = calibrator.calibrate(buf, burn_in_end=burn_in, percentile=percentile, window_size=burn_in)
+    calibrator = LatencySloCalibrator(multiplier=calibration_multiplier)
+    calibrated = calibrator.calibrate(buf, calibration_end=calibration_duration, percentile=percentile, window_size=calibration_duration)
     detection_target = SloTarget(
         percentile=percentile,
         threshold=calibrated.threshold,
@@ -99,12 +99,12 @@ def _run_one(
         responses = buf.window(t, t + window_size)
         if responses:
             fired = bool(detector.detect(responses))
-            # disturbance window if any overlap with [burn_in, total_duration)
-            is_disturbance = t + window_size > burn_in
+            # disturbance window if any overlap with [calibration_duration, total_duration)
+            is_disturbance = t + window_size > calibration_duration
             if is_disturbance:
                 if fired:
                     tp += 1
-                    dl = (t + window_size) - burn_in
+                    dl = (t + window_size) - calibration_duration
                     detection_latencies.append(dl)
                     if time_to_first_detection is None:
                         time_to_first_detection = dl
@@ -148,7 +148,7 @@ def sweep_slo_performance(
     seed: int = 42,
     rate: float = 5.0,
     n_workloads: int = 10,
-    burn_in: float = 120.0,
+    calibration_duration: float = 120.0,
     post_disturbance: float = 60.0,
     disturbance_addend: float = 0.8,
     disturbance_coverage: float = 0.5,
@@ -163,7 +163,7 @@ def sweep_slo_performance(
             seed=seed,
             rate=rate,
             n_workloads=n_workloads,
-            burn_in=burn_in,
+            calibration_duration=calibration_duration,
             post_disturbance=post_disturbance,
             disturbance_addend=disturbance_addend,
             disturbance_coverage=disturbance_coverage,
