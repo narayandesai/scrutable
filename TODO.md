@@ -19,5 +19,4 @@
 
 ## Polish
 - [x] Add `pyrightconfig.json` to silence false-positive `reportMissingImports` warnings from Pyright (src layout + .venv not visible to Pyright by default)
-- [ ] `WorkloadRegistry.get()` raises a bare `KeyError` — a `ValueError` with the unknown ID in the message would be friendlier
-- [ ] `PathologyInjector` is not exported from `__init__.py` — decide if it belongs in the public API
+- [x] `WorkloadRegistry.get()` raises a bare `KeyError` — a `ValueError` with the unknown ID in the message would be friendlier

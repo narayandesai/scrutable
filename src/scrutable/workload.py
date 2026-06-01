@@ -95,7 +95,10 @@ class WorkloadRegistry:
         self._models[model.workload_id] = model
 
     def get(self, workload_id: str) -> WorkloadModel:
-        return self._models[workload_id]
+        try:
+            return self._models[workload_id]
+        except KeyError:
+            raise ValueError(f"Unknown workload_id: {workload_id!r}")
 
     def all_ids(self) -> list[str]:
         return list(self._models.keys())

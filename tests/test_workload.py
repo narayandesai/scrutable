@@ -112,9 +112,9 @@ def test_registry_all_ids():
     assert set(registry.all_ids()) == {"wl0", "wl1", "wl2"}
 
 
-def test_registry_missing_key_raises():
+def test_registry_missing_key_raises_value_error_with_id():
     registry = WorkloadRegistry()
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError, match="nonexistent"):
         registry.get("nonexistent")
 
 
