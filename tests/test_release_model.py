@@ -1,7 +1,5 @@
-import pytest
 from scrutable.models import (
-    Release, ReleaseChange, RolloutState, RolloutStateTransition,
-    ReleaseStatus, ClusterState,
+    Release, ReleaseChange, RolloutState, RolloutStateTransition, ClusterState,
 )
 
 
