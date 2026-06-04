@@ -1,4 +1,5 @@
 from __future__ import annotations
+import enum
 from dataclasses import dataclass, field
 
 
@@ -34,6 +35,7 @@ class ClusterState:
     cluster_id: str
     region_id: str
     traffic_enabled: bool = True
+    capacity_weight: float = 1.0
 
 
 @dataclass
@@ -80,3 +82,46 @@ class Inference:
     detected_at: float
     window_start: float
     window_end: float
+
+
+class RolloutState(enum.Enum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    HALTED = "halted"
+    COMPLETED = "completed"
+    ROLLED_BACK = "rolled_back"
+
+
+@dataclass
+class RolloutStateTransition:
+    state: RolloutState
+    entered_at: float
+    exited_at: float
+
+
+@dataclass
+class ReleaseChange:
+    change_id: str
+    disturbance: Disturbance | None = None
+
+
+@dataclass
+class Release:
+    release_id: str
+    changes: list[ReleaseChange] = field(default_factory=list)
+    description: str = ""
+
+
+@dataclass
+class ReleaseStatus:
+    release_id: str
+    state: RolloutState
+    stages_completed: int
+    stages_total: int
+    deployed_clusters: list[str]
+    pending_clusters: list[str]
+    rollout_fraction: float
+    capacity_fraction: float
+    started_at: float | None
+    state_entered_at: float | None
+    state_history: list[RolloutStateTransition]
