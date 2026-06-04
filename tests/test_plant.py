@@ -66,3 +66,25 @@ def test_enabled_clusters_cache_invalidated_on_set(tiny_infra):
     tiny_infra.set_cluster_enabled("r1c1", False)
     second = tiny_infra.enabled_clusters()
     assert len(second) == len(first) - 1
+
+
+def test_plant_capacity_weight_applied_from_config():
+    config = PlantConfig(
+        regions=["r1"],
+        clusters={"r1": ["r1c1", "r1c2"]},
+        nodes={"r1c1": ["r1c1n1"], "r1c2": ["r1c2n1"]},
+        capacity_weights={"r1c1": 2.0},
+    )
+    plant = Plant(config)
+    assert plant.get_cluster("r1c1").capacity_weight == 2.0
+    assert plant.get_cluster("r1c2").capacity_weight == 1.0
+
+
+def test_plant_capacity_weight_defaults_to_one():
+    config = PlantConfig(
+        regions=["r1"],
+        clusters={"r1": ["r1c1"]},
+        nodes={"r1c1": ["r1c1n1"]},
+    )
+    plant = Plant(config)
+    assert plant.get_cluster("r1c1").capacity_weight == 1.0

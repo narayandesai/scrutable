@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from scrutable.models import NodeState, ClusterState
 
 
@@ -8,6 +8,7 @@ class PlantConfig:
     regions: list[str]
     clusters: dict[str, list[str]]   # region_id -> [cluster_id]
     nodes: dict[str, list[str]]       # cluster_id -> [node_id]
+    capacity_weights: dict[str, float] = field(default_factory=dict)
 
 
 class Plant:
@@ -21,7 +22,9 @@ class Plant:
         for region_id, cluster_ids in config.clusters.items():
             for cluster_id in cluster_ids:
                 self._clusters[cluster_id] = ClusterState(
-                    cluster_id=cluster_id, region_id=region_id
+                    cluster_id=cluster_id,
+                    region_id=region_id,
+                    capacity_weight=config.capacity_weights.get(cluster_id, 1.0),
                 )
                 node_ids = config.nodes.get(cluster_id, [])
                 self._cluster_to_nodes[cluster_id] = node_ids
