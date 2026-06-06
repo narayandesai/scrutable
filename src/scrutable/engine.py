@@ -10,7 +10,8 @@ from scrutable.disturbance import DisturbanceInjector, TimedDisturbance, Stochas
 from scrutable.operations import RolloutSystem, OperationsSystem
 from scrutable.detector import Detector
 from scrutable.actuator import Actuator
-from scrutable.models import WorkloadState
+from scrutable.models import WorkloadState, RolloutState
+from scrutable.rollout import Rollout
 
 
 class SimulationEngine:
@@ -92,3 +93,24 @@ class SimulationEngine:
             self._schedule_detector_tick(d, t)
 
         self._loop.schedule(next_tick, tick)
+
+    def add_rollout(self, rollout: Rollout) -> None:
+        rollout._activate(self._infra, self._workload_states)
+        self._rollouts.register(rollout)
+        self._schedule_rollout_stage(rollout, stage_idx=0, at=rollout.start_at)
+
+    def _schedule_rollout_stage(self, rollout: Rollout, stage_idx: int, at: float) -> None:
+        def advance():
+            status = rollout.status
+            if status.state not in (RolloutState.PENDING, RolloutState.IN_PROGRESS):
+                return
+            if not rollout._check_gates(stage_idx, self._loop.now):
+                rollout.halt(self._loop.now)
+                return
+            rollout._deploy_stage(stage_idx, self._loop.now)
+            next_idx = stage_idx + 1
+            if next_idx < len(rollout.cluster_order):
+                self._schedule_rollout_stage(
+                    rollout, next_idx, self._loop.now + rollout.stage_interval
+                )
+        self._loop.schedule(at, advance)
