@@ -145,7 +145,7 @@ def test_rollback_cluster_removes_effects(two_cluster_plant, latency_release):
     rollout._activate(two_cluster_plant, {})
     rollout._deploy_stage(0, sim_time=1.0)
     rollout.halt(sim_time=2.0)
-    rollout.rollback_cluster("r1c1", sim_time=3.0)
+    rollout.rollback_cluster("r1c1")
 
     for node_id in two_cluster_plant.nodes_in_cluster("r1c1"):
         assert two_cluster_plant.get_node(node_id).latency_addend == pytest.approx(0.0)
@@ -159,7 +159,7 @@ def test_rollback_cluster_noop_if_not_deployed(two_cluster_plant, latency_releas
     rollout = Rollout(latency_release, ["r1c1", "r1c2"], stage_interval=10.0)
     rollout._activate(two_cluster_plant, {})
     rollout.halt(sim_time=1.0)
-    rollout.rollback_cluster("r1c1", sim_time=2.0)
+    rollout.rollback_cluster("r1c1")
     assert rollout.status.deployed_clusters == []
 
 
@@ -186,14 +186,14 @@ def test_check_gates_true_when_no_gates(two_cluster_plant, benign_release):
 
 
 def test_check_gates_true_when_all_pass(two_cluster_plant, benign_release):
-    gates = [[lambda status, t: True, lambda status, t: True]]
+    gates = [[lambda *_: True, lambda *_: True]]
     rollout = Rollout(benign_release, ["r1c1", "r1c2"], stage_interval=10.0, gates=gates)
     rollout._activate(two_cluster_plant, {})
     assert rollout._check_gates(0, sim_time=1.0) is True
 
 
 def test_check_gates_false_when_one_fails(two_cluster_plant, benign_release):
-    gates = [[lambda status, t: True, lambda status, t: False]]
+    gates = [[lambda *_: True, lambda *_: False]]
     rollout = Rollout(benign_release, ["r1c1", "r1c2"], stage_interval=10.0, gates=gates)
     rollout._activate(two_cluster_plant, {})
     assert rollout._check_gates(0, sim_time=1.0) is False
@@ -201,8 +201,8 @@ def test_check_gates_false_when_one_fails(two_cluster_plant, benign_release):
 
 def test_check_gates_per_stage_independent(two_cluster_plant, benign_release):
     gates = [
-        [lambda status, t: False],
-        [lambda status, t: True],
+        [lambda *_: False],
+        [lambda *_: True],
     ]
     rollout = Rollout(benign_release, ["r1c1", "r1c2"], stage_interval=10.0, gates=gates)
     rollout._activate(two_cluster_plant, {})
@@ -213,7 +213,7 @@ def test_check_gates_per_stage_independent(two_cluster_plant, benign_release):
 def test_check_gates_receives_current_status(two_cluster_plant, latency_release):
     seen_stages = []
 
-    def capture_gate(status, t):
+    def capture_gate(status, _):
         seen_stages.append(status.stages_completed)
         return True
 

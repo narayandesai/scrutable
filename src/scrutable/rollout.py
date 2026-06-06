@@ -121,7 +121,7 @@ class Rollout:
             return
         self._transition(RolloutState.HALTED, sim_time)
 
-    def rollback_cluster(self, cluster_id: str, sim_time: float) -> None:
+    def rollback_cluster(self, cluster_id: str) -> None:
         if cluster_id not in self._deployed_clusters:
             return
         assert self._plant is not None
@@ -134,7 +134,7 @@ class Rollout:
 
     def rollback_all(self, sim_time: float) -> None:
         for cluster_id in list(self._deployed_clusters):
-            self.rollback_cluster(cluster_id, sim_time)
+            self.rollback_cluster(cluster_id)
         self._transition(RolloutState.ROLLED_BACK, sim_time)
 
     def _check_gates(self, stage_idx: int, sim_time: float) -> bool:
