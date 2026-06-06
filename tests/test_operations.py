@@ -1,5 +1,5 @@
 import pytest
-from scrutable.models import Release, ReleaseChange
+from scrutable.models import Release
 from scrutable.rollout import Rollout
 from scrutable.operations import RolloutSystem, OperationsSystem
 
