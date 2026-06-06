@@ -12,9 +12,15 @@ from scrutable.models import (
     Disturbance,
     DisturbanceScope,
     Inference,
+    RolloutState,
+    RolloutStateTransition,
+    ReleaseStatus,
+    ReleaseChange,
+    Release,
 )
 from scrutable.disturbance import TimedDisturbance, StochasticDisturbance
 from scrutable.operations import RolloutSystem, OperationsSystem
+from scrutable.rollout import Rollout, GateCallback
 from scrutable.detector import Detector
 from scrutable.detectors.slo import (
     SloTarget, LatencySloCalibrator, LatencySloDetector,
@@ -49,6 +55,13 @@ __all__ = [
     "Inference",
     "TimedDisturbance",
     "StochasticDisturbance",
+    "Release",
+    "ReleaseChange",
+    "RolloutState",
+    "RolloutStateTransition",
+    "ReleaseStatus",
+    "Rollout",
+    "GateCallback",
     "RolloutSystem",
     "OperationsSystem",
     "Detector",
