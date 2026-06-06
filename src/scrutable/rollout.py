@@ -82,3 +82,36 @@ class Rollout:
             )
         self._state = new_state
         self._state_entered_at = sim_time
+
+    def _cluster_scoped_disturbance(self, change: ReleaseChange, cluster_id: str) -> Disturbance:
+        d = change.disturbance
+        assert d is not None
+        return Disturbance(
+            disturbance_id=f"{self._release.release_id}-{change.change_id}-{cluster_id}",
+            scope=DisturbanceScope(
+                target_type=d.scope.target_type,
+                filter_id=cluster_id,
+                percentage=d.scope.percentage,
+            ),
+            node_effects=d.node_effects,
+            workload_effects=d.workload_effects,
+        )
+
+    def _deploy_stage(self, stage_idx: int, sim_time: float) -> None:
+        cluster_id = self.cluster_order[stage_idx]
+
+        if self._state == RolloutState.PENDING:
+            self._transition(RolloutState.IN_PROGRESS, sim_time)
+            self._started_at = sim_time
+
+        assert self._plant is not None
+        assert self._workload_states is not None
+        for change in self._release.changes:
+            if change.disturbance is not None:
+                scoped = self._cluster_scoped_disturbance(change, cluster_id)
+                apply_disturbance(scoped, self._plant, self._workload_states)
+
+        self._deployed_clusters.append(cluster_id)
+
+        if len(self._deployed_clusters) == len(self.cluster_order):
+            self._transition(RolloutState.COMPLETED, sim_time)
