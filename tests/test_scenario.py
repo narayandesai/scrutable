@@ -3,7 +3,6 @@ from scrutable.models import WorkloadModel, Disturbance, DisturbanceScope, Workl
 from scrutable.workload import WorkloadRegistry
 from scrutable.synthesizer import InputConfig
 from scrutable.disturbance import TimedDisturbance
-from scrutable.operations import SoftwareVersion
 from scrutable.engine import SimulationEngine
 from scrutable.detector import Detector
 from scrutable.actuator import Actuator

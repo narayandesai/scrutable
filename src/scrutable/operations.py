@@ -1,41 +1,23 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
-from scrutable.models import Disturbance, WorkloadState
 from scrutable.plant import Plant
-from scrutable.disturbance import apply_disturbance, remove_disturbance
-
-
-@dataclass
-class SoftwareVersion:
-    version_id: str
-    disturbances: list[Disturbance] = field(default_factory=list)
+from scrutable.rollout import Rollout
 
 
 class RolloutSystem:
-    def __init__(
-        self,
-        versions: dict[str, SoftwareVersion],
-        plant: Plant,
-        workload_states: dict[str, WorkloadState],
-    ) -> None:
-        self._versions = versions
-        self._plant = plant
-        self._workload_states = workload_states
-        self._active: set[str] = set()
+    def __init__(self) -> None:
+        self._rollouts: dict[str, Rollout] = {}
 
-    def deploy(self, version_id: str) -> None:
-        if version_id in self._active:
-            return
-        for disturbance in self._versions[version_id].disturbances:
-            apply_disturbance(disturbance, self._plant, self._workload_states)
-        self._active.add(version_id)
+    def register(self, rollout: Rollout) -> None:
+        self._rollouts[rollout._release.release_id] = rollout
 
-    def rollback(self, version_id: str) -> None:
-        if version_id not in self._active:
-            return
-        for disturbance in self._versions[version_id].disturbances:
-            remove_disturbance(disturbance, self._plant, self._workload_states)
-        self._active.discard(version_id)
+    def get(self, release_id: str) -> Rollout:
+        try:
+            return self._rollouts[release_id]
+        except KeyError:
+            raise ValueError(f"Unknown release_id: {release_id!r}")
+
+    def all_rollouts(self) -> list[Rollout]:
+        return list(self._rollouts.values())
 
 
 class OperationsSystem:

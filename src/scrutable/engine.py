@@ -7,7 +7,7 @@ from scrutable.observations import ObservationBuffer
 from scrutable.simulator import ServiceSimulator
 from scrutable.synthesizer import InputConfig, InputSynthesizer
 from scrutable.disturbance import DisturbanceInjector, TimedDisturbance, StochasticDisturbance
-from scrutable.operations import RolloutSystem, OperationsSystem, SoftwareVersion
+from scrutable.operations import RolloutSystem, OperationsSystem
 from scrutable.detector import Detector
 from scrutable.actuator import Actuator
 from scrutable.models import WorkloadState
@@ -19,7 +19,6 @@ class SimulationEngine:
         infra: Plant,
         registry: WorkloadRegistry,
         synth_config: InputConfig,
-        versions: dict[str, SoftwareVersion] | None = None,
         seed: int | None = None,
     ) -> None:
         self._rng = np.random.default_rng(seed)
@@ -38,7 +37,7 @@ class SimulationEngine:
         self._injector = DisturbanceInjector(
             self._loop, infra, self._workload_states, self._rng
         )
-        self._rollouts = RolloutSystem(versions or {}, infra, self._workload_states)
+        self._rollouts = RolloutSystem()
         self._ops = OperationsSystem(infra)
         self._detectors: list[Detector] = []
         self._actuators: list[Actuator] = []

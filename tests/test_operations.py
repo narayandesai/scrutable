@@ -1,5 +1,7 @@
-from scrutable.models import Disturbance, DisturbanceScope, WorkloadState
-from scrutable.operations import SoftwareVersion, RolloutSystem, OperationsSystem
+import pytest
+from scrutable.models import Release, ReleaseChange
+from scrutable.rollout import Rollout
+from scrutable.operations import RolloutSystem, OperationsSystem
 
 
 def test_drain_disables_cluster_traffic(tiny_infra):
@@ -16,53 +18,24 @@ def test_restore_re_enables_cluster_traffic(tiny_infra):
     assert tiny_infra.get_cluster("r1c1").traffic_enabled is True
 
 
-def test_rollout_deploy_applies_disturbances(tiny_infra):
-    workload_states: dict[str, WorkloadState] = {}
-    disturbance = Disturbance(
-        disturbance_id="bug-v2",
-        scope=DisturbanceScope(target_type="node", filter_id=None, percentage=1.0),
-        node_effects={"latency_multiplier": 3.0},
-    )
-    version = SoftwareVersion(version_id="v2", disturbances=[disturbance])
-    rollouts = RolloutSystem({"v2": version}, tiny_infra, workload_states)
-    rollouts.deploy("v2")
-    for node in tiny_infra.all_nodes():
-        assert node.latency_multiplier == 3.0
+def test_rollout_system_register_and_get():
+    release = Release(release_id="v1")
+    rollout = Rollout(release, ["r1c1"], stage_interval=10.0)
+    system = RolloutSystem()
+    system.register(rollout)
+    assert system.get("v1") is rollout
 
 
-def test_rollout_deploy_idempotent(tiny_infra):
-    workload_states: dict[str, WorkloadState] = {}
-    disturbance = Disturbance(
-        disturbance_id="bug-v3",
-        scope=DisturbanceScope(target_type="node", filter_id=None, percentage=1.0),
-        node_effects={"latency_multiplier": 2.0},
-    )
-    version = SoftwareVersion(version_id="v3", disturbances=[disturbance])
-    rollouts = RolloutSystem({"v3": version}, tiny_infra, workload_states)
-    rollouts.deploy("v3")
-    rollouts.deploy("v3")  # second deploy should be a no-op
-    for node in tiny_infra.all_nodes():
-        assert node.latency_multiplier == 2.0
+def test_rollout_system_get_unknown_raises():
+    system = RolloutSystem()
+    with pytest.raises(ValueError, match="v99"):
+        system.get("v99")
 
 
-def test_rollout_rollback_removes_disturbances(tiny_infra):
-    workload_states: dict[str, WorkloadState] = {}
-    disturbance = Disturbance(
-        disturbance_id="bug-v4",
-        scope=DisturbanceScope(target_type="node", filter_id=None, percentage=1.0),
-        node_effects={"latency_multiplier": 5.0},
-    )
-    version = SoftwareVersion(version_id="v4", disturbances=[disturbance])
-    rollouts = RolloutSystem({"v4": version}, tiny_infra, workload_states)
-    rollouts.deploy("v4")
-    rollouts.rollback("v4")
-    for node in tiny_infra.all_nodes():
-        assert node.latency_multiplier == 1.0
-
-
-def test_rollout_rollback_not_deployed_is_noop(tiny_infra):
-    workload_states: dict[str, WorkloadState] = {}
-    version = SoftwareVersion(version_id="v5", disturbances=[])
-    rollouts = RolloutSystem({"v5": version}, tiny_infra, workload_states)
-    rollouts.rollback("v5")  # should not raise
-    assert tiny_infra.get_node("r1c1n1").latency_multiplier == 1.0
+def test_rollout_system_all_rollouts():
+    system = RolloutSystem()
+    r1 = Rollout(Release(release_id="v1"), ["r1c1"], stage_interval=10.0)
+    r2 = Rollout(Release(release_id="v2"), ["r1c2"], stage_interval=10.0)
+    system.register(r1)
+    system.register(r2)
+    assert set(r.status.release_id for r in system.all_rollouts()) == {"v1", "v2"}

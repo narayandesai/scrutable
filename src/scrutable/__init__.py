@@ -14,7 +14,7 @@ from scrutable.models import (
     Inference,
 )
 from scrutable.disturbance import TimedDisturbance, StochasticDisturbance
-from scrutable.operations import SoftwareVersion, RolloutSystem, OperationsSystem
+from scrutable.operations import RolloutSystem, OperationsSystem
 from scrutable.detector import Detector
 from scrutable.detectors.slo import (
     SloTarget, LatencySloCalibrator, LatencySloDetector,
@@ -49,7 +49,6 @@ __all__ = [
     "Inference",
     "TimedDisturbance",
     "StochasticDisturbance",
-    "SoftwareVersion",
     "RolloutSystem",
     "OperationsSystem",
     "Detector",

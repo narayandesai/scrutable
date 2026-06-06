@@ -71,7 +71,7 @@ def test_actuator_receives_inference(tiny_infra, build_response):
     detector = HighErrorRateDetector()
     actuator = DrainActuator()
     ops = OperationsSystem(tiny_infra)
-    rollouts = RolloutSystem({}, tiny_infra, {})
+    rollouts = RolloutSystem()
     window = [build_response(error_code=1) for _ in range(20)]
     for inf in detector.detect(window):
         actuator.act(inf, 60.0, rollouts, ops)
