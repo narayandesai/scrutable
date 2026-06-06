@@ -115,3 +115,29 @@ class Rollout:
 
         if len(self._deployed_clusters) == len(self.cluster_order):
             self._transition(RolloutState.COMPLETED, sim_time)
+
+    def halt(self, sim_time: float) -> None:
+        if self._state not in (RolloutState.PENDING, RolloutState.IN_PROGRESS):
+            return
+        self._transition(RolloutState.HALTED, sim_time)
+
+    def rollback_cluster(self, cluster_id: str, sim_time: float) -> None:
+        if cluster_id not in self._deployed_clusters:
+            return
+        assert self._plant is not None
+        assert self._workload_states is not None
+        for change in self._release.changes:
+            if change.disturbance is not None:
+                scoped = self._cluster_scoped_disturbance(change, cluster_id)
+                remove_disturbance(scoped, self._plant, self._workload_states)
+        self._deployed_clusters.remove(cluster_id)
+
+    def rollback_all(self, sim_time: float) -> None:
+        for cluster_id in list(self._deployed_clusters):
+            self.rollback_cluster(cluster_id, sim_time)
+        self._transition(RolloutState.ROLLED_BACK, sim_time)
+
+    def _check_gates(self, stage_idx: int, sim_time: float) -> bool:
+        if stage_idx >= len(self._gates):
+            return True
+        return all(gate(self.status, sim_time) for gate in self._gates[stage_idx])
