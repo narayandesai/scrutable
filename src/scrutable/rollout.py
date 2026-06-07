@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections.abc import Sequence
 from typing import Callable
 from scrutable.models import (
     Release, ReleaseChange, ReleaseStatus, RolloutState, RolloutStateTransition,
@@ -17,13 +18,13 @@ class Rollout:
         cluster_order: list[str],
         stage_interval: float,
         start_at: float = 0.0,
-        gates: list[list[GateCallback]] | None = None,
+        gates: Sequence[Sequence[GateCallback]] | None = None,
     ) -> None:
         self._release = release
         self.cluster_order = cluster_order
         self.stage_interval = stage_interval
         self.start_at = start_at
-        self._gates: list[list[GateCallback]] = gates or []
+        self._gates: list[list[GateCallback]] = [list(s) for s in gates] if gates else []
 
         self._plant: Plant | None = None
         self._workload_states: dict[str, WorkloadState] | None = None
