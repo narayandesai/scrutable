@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import pytest
 from scrutable.traffic import FlatCurve, SinusoidalCurve, DoublePeakCurve

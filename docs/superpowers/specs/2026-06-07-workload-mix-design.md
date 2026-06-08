@@ -24,7 +24,7 @@ Three built-in implementations:
 - **`SinusoidalCurve(peak_phase: float, trough_depth: float)`** — single peak per period.
   - `peak_phase ∈ [0, 1)`: position of peak (e.g. 0.75 ≈ 18:00 if period = 86400 s).
   - `trough_depth ∈ [0, 1]`: amplitude; `multiplier(φ) = 1 + trough_depth * cos(2π(φ − peak_phase))`. Trough value = `1 − trough_depth`. Mean = 1.0 by construction.
-- **`DoublePeakCurve(peak1_phase: float, peak2_phase: float, trough_depth: float)`** — superposition of two half-amplitude sinusoids at `peak1_phase` and `peak2_phase`. Normalized to mean 1.0.
+- **`DoublePeakCurve(peak1_phase: float, peak2_phase: float, trough_depth: float)`** — double-frequency cosines centered at `peak1_phase` and `peak2_phase`, each with half amplitude: `1 + (trough_depth/2)*cos(4π(φ-peak1_phase)) + (trough_depth/2)*cos(4π(φ-peak2_phase))`. Normalized to mean 1.0. Peaks of the combined curve align with the specified phases when `|peak1_phase - peak2_phase| ≈ 0.5`.
 
 ### `MarkovActivity`
 
