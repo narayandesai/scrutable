@@ -5,7 +5,7 @@ from scrutable.models import WorkloadModel, WorkloadState
 from scrutable.workload import WorkloadRegistry
 from scrutable.simulator import ServiceSimulator
 from scrutable.synthesizer import InputSynthesizer
-from scrutable.traffic import WorkloadEntry, WorkloadMix, SinusoidalCurve
+from scrutable.traffic import WorkloadEntry, WorkloadMix, SinusoidalCurve, MarkovActivity
 
 
 def _model(wid: str) -> WorkloadModel:
@@ -122,3 +122,55 @@ def test_synthesizer_70_30_split(tiny_infra):
     count2 = sum(1 for r in responses if r.workload_id == "wl2")
     ratio = count1 / count2
     assert 1.6 < ratio < 3.2  # expected ≈ 7/3 = 2.33
+
+
+def test_markov_high_onset_rate_reduces_arrivals(tiny_infra):
+    # onset_rate=10 (active periods ~0.1s), recovery_rate=0.1 (inactive periods ~10s)
+    # mean active fraction ≈ 0.1 / (10 + 0.1) ≈ 0.01
+    activity = MarkovActivity(onset_rate=10.0, recovery_rate=0.1)
+    mix = WorkloadMix(
+        total_rate=1000.0,
+        period=3600.0,
+        entries=[WorkloadEntry(model=_model("wl1"), share=1.0, activity=activity)],
+    )
+    loop, synth, buffer = _make_synth(tiny_infra, mix, seed=0)
+    synth.start()
+    loop.run(100.0)
+    count = len(buffer.window(0.0, 102.0))
+    # Without activity: 1000 req/s * 100s = 100_000; with ~1% active ≈ 1000
+    assert count < 10_000
+
+
+def test_markov_high_recovery_rate_approaches_full_rate(tiny_infra):
+    # onset_rate=0.001 (active periods ~1000s), recovery_rate=100.0 (inactive periods ~0.01s)
+    # mean active fraction ≈ 100 / (0.001 + 100) ≈ 1.0
+    activity = MarkovActivity(onset_rate=0.001, recovery_rate=100.0)
+    mix = WorkloadMix(
+        total_rate=100.0,
+        period=3600.0,
+        entries=[WorkloadEntry(model=_model("wl1"), share=1.0, activity=activity)],
+    )
+    loop, synth, buffer = _make_synth(tiny_infra, mix, seed=0)
+    synth.start()
+    loop.run(10.0)
+    count = len(buffer.window(0.0, 12.0))
+    # Expected ≈ 1000 arrivals; allow ±40%
+    assert 600 < count < 1400
+
+
+def test_markov_initial_inactive_delays_start(tiny_infra):
+    # Workload starts inactive; arrivals should begin only after first recovery
+    activity = MarkovActivity(onset_rate=0.001, recovery_rate=10.0, initial_active=False)
+    mix = WorkloadMix(
+        total_rate=1000.0,
+        period=3600.0,
+        entries=[WorkloadEntry(model=_model("wl1"), share=1.0, activity=activity)],
+    )
+    loop, synth, buffer = _make_synth(tiny_infra, mix, seed=0)
+    synth.start()
+    loop.run(0.05)  # 50ms; mean inactive period=0.1s, so likely still inactive
+    count_early = len(buffer.window(0.0, 0.06))
+    loop.run(5.0)   # long enough for recovery
+    count_later = len(buffer.window(0.0, 6.0))
+    assert count_early == 0
+    assert count_later > 0
