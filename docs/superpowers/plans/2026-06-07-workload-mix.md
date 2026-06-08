@@ -424,9 +424,9 @@ def test_synthesizer_sinusoidal_peak_exceeds_trough(tiny_infra):
     loop, synth, buffer = _make_synth(tiny_infra, mix, seed=0)
     synth.start()
     loop.run(1000.0)
-    # phase=0 at t=0..500 (peak), phase=0.5 at t=500..1000 (trough)
-    peak_count = len(buffer.window(0.0, 500.0))
-    trough_count = len(buffer.window(500.0, 1000.0))
+    # Compare narrow bands: near peak (phase≈0, rate≈300) vs near trough (phase≈0.5, rate≈100)
+    peak_count = len(buffer.window(0.0, 100.0))
+    trough_count = len(buffer.window(450.0, 550.0))
     assert peak_count > trough_count
 
 

@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 from scrutable.event_loop import EventLoop
 from scrutable.observations import ObservationBuffer
 from scrutable.models import WorkloadModel, WorkloadState
