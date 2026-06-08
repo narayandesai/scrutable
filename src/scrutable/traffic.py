@@ -67,6 +67,9 @@ class WorkloadMix:
         total = sum(e.share for e in self.entries)
         if abs(total - 1.0) >= 1e-6:
             raise ValueError(f"WorkloadEntry shares must sum to 1.0, got {total:.8f}")
+        ids = [e.model.workload_id for e in self.entries]
+        if len(ids) != len(set(ids)):
+            raise ValueError("WorkloadMix entries contain duplicate workload_id values")
         self._lookup = {e.model.workload_id: e for e in self.entries}
 
     def rate_at(self, workload_id: str, t: float) -> float:

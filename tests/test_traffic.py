@@ -110,3 +110,14 @@ def test_workload_entry_default_diurnal_is_flat():
 def test_markov_activity_defaults():
     act = MarkovActivity(onset_rate=2.0, recovery_rate=0.5)
     assert act.initial_active is True
+
+
+def test_workload_mix_duplicate_id_raises():
+    m1 = _model("w1")
+    m2 = _model("w1")  # same id
+    with pytest.raises(ValueError, match="duplicate workload_id"):
+        WorkloadMix(
+            total_rate=100.0,
+            period=3600.0,
+            entries=[WorkloadEntry(model=m1, share=0.5), WorkloadEntry(model=m2, share=0.5)],
+        )
