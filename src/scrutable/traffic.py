@@ -41,8 +41,8 @@ class DoublePeakCurve:
 
 @dataclass
 class MarkovActivity:
-    onset_rate: float
-    recovery_rate: float
+    onset_rate: float    # active→inactive rate λ; mean active duration = 1/λ
+    recovery_rate: float  # inactive→active rate μ; mean inactive duration = 1/μ
     initial_active: bool = True
 
 

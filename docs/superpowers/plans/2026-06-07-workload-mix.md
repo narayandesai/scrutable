@@ -676,7 +676,7 @@ class SimulationEngine:
 pytest tests/test_synthesizer.py -v
 ```
 
-Expected: 7 passed. (Other engine test files will fail if run — that is expected and resolved in Task 5.)
+Expected: 6 passed. (Other engine test files will fail if run — that is expected and resolved in Task 5.)
 
 - [ ] **Step 6: Commit**
 
