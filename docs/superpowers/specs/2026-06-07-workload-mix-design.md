@@ -67,7 +67,7 @@ class WorkloadMix:
     entries: list[WorkloadEntry]
 ```
 
-`__post_init__` validates `abs(sum(e.share for e in entries) − 1.0) < 1e-6`.
+`__post_init__` validates `abs(sum(e.share for e in entries) − 1.0) < 1e-6` and builds `self._lookup: dict[str, WorkloadEntry] = {e.model.workload_id: e for e in entries}`.
 
 Key method:
 
@@ -106,7 +106,7 @@ def __init__(self, infra: Plant, mix: WorkloadMix, seed: int | None = None)
 
 At construction the engine:
 
-1. Builds an internal `dict[str, WorkloadModel]` from `mix.entries` for the simulator's lookup.
+1. Builds a `WorkloadRegistry` from `mix.entries` and passes it to `ServiceSimulator` (no change to `ServiceSimulator`).
 2. Initializes `WorkloadState` for each entry.
 3. Constructs `InputSynthesizer` with the mix.
 
