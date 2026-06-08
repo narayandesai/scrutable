@@ -4,9 +4,25 @@ from scrutable.models import (
 )
 from scrutable.rollout import Rollout
 from scrutable.plant import PlantConfig, Plant
-from scrutable.workload import WorkloadRegistry
-from scrutable.synthesizer import InputConfig
 from scrutable.engine import SimulationEngine
+from scrutable.traffic import WorkloadEntry, WorkloadMix
+
+
+def _make_engine(plant, total_rate=5.0, seed=42):
+    model = WorkloadModel(
+        workload_id="wl1",
+        latency_median=0.1,
+        latency_sigma=0.3,
+        error_scale=1000.0,
+        error_shape=1.5,
+        noise_sigma=0.001,
+    )
+    mix = WorkloadMix(
+        total_rate=total_rate,
+        period=3600.0,
+        entries=[WorkloadEntry(model=model, share=1.0)],
+    )
+    return SimulationEngine(infra=plant, mix=mix, seed=seed)
 
 
 @pytest.fixture
@@ -16,22 +32,7 @@ def two_cluster_engine():
         clusters={"r1": ["r1c1", "r1c2"]},
         nodes={"r1c1": ["r1c1n1"], "r1c2": ["r1c2n1"]},
     ))
-    registry = WorkloadRegistry()
-    registry.register(WorkloadModel(
-        workload_id="wl1",
-        latency_median=0.1,
-        latency_sigma=0.3,
-        error_scale=1000.0,
-        error_shape=1.5,
-        noise_sigma=0.001,
-    ))
-    engine = SimulationEngine(
-        infra=plant,
-        registry=registry,
-        synth_config=InputConfig(workload_rates={"wl1": 5.0}),
-        seed=42,
-    )
-    return engine
+    return _make_engine(plant)
 
 
 @pytest.fixture
@@ -110,25 +111,11 @@ def test_capacity_fraction_reflects_weights():
         nodes={"r1c1": ["r1c1n1"], "r1c2": ["r1c2n1"]},
         capacity_weights={"r1c1": 1.0, "r1c2": 3.0},
     ))
-    registry = WorkloadRegistry()
-    registry.register(WorkloadModel(
-        workload_id="wl1",
-        latency_median=0.1,
-        latency_sigma=0.3,
-        error_scale=1000.0,
-        error_shape=1.5,
-        noise_sigma=0.001,
-    ))
-    engine = SimulationEngine(
-        infra=plant,
-        registry=registry,
-        synth_config=InputConfig(workload_rates={"wl1": 5.0}),
-        seed=42,
-    )
+    engine = _make_engine(plant)
     release = Release(release_id="v1", changes=[ReleaseChange(change_id="ch1")])
     rollout = Rollout(release, ["r1c1", "r1c2"], stage_interval=10.0, start_at=0.0)
     engine.add_rollout(rollout)
-    engine.run(until=3.0)  # only stage 0 fires at t=0; stage 1 at t=10 is beyond
+    engine.run(until=3.0)
 
     s = rollout.status
     assert s.stages_completed == 1

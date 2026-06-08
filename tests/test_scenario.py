@@ -1,33 +1,28 @@
 import numpy as np
 from scrutable.models import WorkloadModel, Disturbance, DisturbanceScope, WorkloadState, Inference
-from scrutable.workload import WorkloadRegistry
-from scrutable.synthesizer import InputConfig
 from scrutable.disturbance import TimedDisturbance
 from scrutable.engine import SimulationEngine
 from scrutable.detector import Detector
 from scrutable.actuator import Actuator
 from scrutable.operations import RolloutSystem, OperationsSystem
-
-
-def _make_registry():
-    registry = WorkloadRegistry()
-    registry.register(
-        WorkloadModel(
-            workload_id="wl1",
-            latency_median=0.1,
-            latency_sigma=0.3,
-            error_scale=1000.0,
-            error_shape=1.5,
-            noise_sigma=0.001,
-        )
-    )
-    return registry
+from scrutable.traffic import WorkloadEntry, WorkloadMix
 
 
 def _make_engine(tiny_infra, seed=42):
-    registry = _make_registry()
-    config = InputConfig(workload_rates={"wl1": 50.0})
-    return SimulationEngine(tiny_infra, registry, config, seed=seed)
+    model = WorkloadModel(
+        workload_id="wl1",
+        latency_median=0.1,
+        latency_sigma=0.3,
+        error_scale=1000.0,
+        error_shape=1.5,
+        noise_sigma=0.001,
+    )
+    mix = WorkloadMix(
+        total_rate=50.0,
+        period=3600.0,
+        entries=[WorkloadEntry(model=model, share=1.0)],
+    )
+    return SimulationEngine(tiny_infra, mix=mix, seed=seed)
 
 
 def test_engine_produces_responses(tiny_infra):

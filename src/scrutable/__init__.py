@@ -1,7 +1,13 @@
 from scrutable.engine import SimulationEngine
 from scrutable.plant import PlantConfig, Plant
-from scrutable.workload import WorkloadRegistry
-from scrutable.synthesizer import InputConfig
+from scrutable.traffic import (
+    FlatCurve,
+    SinusoidalCurve,
+    DoublePeakCurve,
+    MarkovActivity,
+    WorkloadEntry,
+    WorkloadMix,
+)
 from scrutable.models import (
     WorkloadModel,
     WorkloadState,
@@ -42,8 +48,12 @@ __all__ = [
     "SimulationEngine",
     "PlantConfig",
     "Plant",
-    "WorkloadRegistry",
-    "InputConfig",
+    "FlatCurve",
+    "SinusoidalCurve",
+    "DoublePeakCurve",
+    "MarkovActivity",
+    "WorkloadEntry",
+    "WorkloadMix",
     "WorkloadModel",
     "WorkloadState",
     "NodeState",
