@@ -5,35 +5,39 @@ from scrutable.plant import Plant
 from scrutable.workload import WorkloadRegistry
 from scrutable.observations import ObservationBuffer
 from scrutable.simulator import ServiceSimulator
-from scrutable.synthesizer import InputConfig, InputSynthesizer
+from scrutable.synthesizer import InputSynthesizer
 from scrutable.disturbance import DisturbanceInjector, TimedDisturbance, StochasticDisturbance
 from scrutable.operations import RolloutSystem, OperationsSystem
 from scrutable.detector import Detector
 from scrutable.actuator import Actuator
 from scrutable.models import WorkloadState, RolloutState
 from scrutable.rollout import Rollout
+from scrutable.traffic import WorkloadMix
 
 
 class SimulationEngine:
     def __init__(
         self,
         infra: Plant,
-        registry: WorkloadRegistry,
-        synth_config: InputConfig,
+        mix: WorkloadMix,
         seed: int | None = None,
     ) -> None:
         self._rng = np.random.default_rng(seed)
         self._loop = EventLoop()
         self._infra = infra
         self._workload_states: dict[str, WorkloadState] = {
-            wid: WorkloadState(wid) for wid in registry.all_ids()
+            entry.model.workload_id: WorkloadState(entry.model.workload_id)
+            for entry in mix.entries
         }
+        registry = WorkloadRegistry()
+        for entry in mix.entries:
+            registry.register(entry.model)
         self._buffer = ObservationBuffer()
         self._simulator = ServiceSimulator(
             self._loop, infra, registry, self._workload_states, self._buffer, self._rng
         )
         self._synthesizer = InputSynthesizer(
-            synth_config, self._loop, self._simulator, self._rng
+            mix, self._loop, self._simulator, self._rng
         )
         self._injector = DisturbanceInjector(
             self._loop, infra, self._workload_states, self._rng
