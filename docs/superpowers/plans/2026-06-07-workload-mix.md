@@ -137,8 +137,8 @@ class DoublePeakCurve:
         a = self.trough_depth / 2.0
         return (
             1.0
-            + a * math.cos(2.0 * math.pi * (phase - self.peak1_phase))
-            + a * math.cos(2.0 * math.pi * (phase - self.peak2_phase))
+            + a * math.cos(4.0 * math.pi * (phase - self.peak1_phase))
+            + a * math.cos(4.0 * math.pi * (phase - self.peak2_phase))
         )
 ```
 
