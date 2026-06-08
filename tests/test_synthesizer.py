@@ -138,7 +138,7 @@ def test_markov_high_onset_rate_reduces_arrivals(tiny_infra):
     loop.run(100.0)
     count = len(buffer.window(0.0, 102.0))
     # Without activity: 1000 req/s * 100s = 100_000; with ~1% active ≈ 1000
-    assert count < 10_000
+    assert 50 < count < 5_000
 
 
 def test_markov_high_recovery_rate_approaches_full_rate(tiny_infra):
@@ -159,8 +159,9 @@ def test_markov_high_recovery_rate_approaches_full_rate(tiny_infra):
 
 
 def test_markov_initial_inactive_delays_start(tiny_infra):
-    # Workload starts inactive; arrivals should begin only after first recovery
-    activity = MarkovActivity(onset_rate=0.001, recovery_rate=10.0, initial_active=False)
+    # Workload starts inactive; arrivals begin only after first recovery
+    # recovery_rate=0.1 → mean inactive period = 10s; P(transition < 50ms) ≈ 0.5%
+    activity = MarkovActivity(onset_rate=0.001, recovery_rate=0.1, initial_active=False)
     mix = WorkloadMix(
         total_rate=1000.0,
         period=3600.0,
@@ -168,9 +169,9 @@ def test_markov_initial_inactive_delays_start(tiny_infra):
     )
     loop, synth, buffer = _make_synth(tiny_infra, mix, seed=0)
     synth.start()
-    loop.run(0.05)  # 50ms; mean inactive period=0.1s, so likely still inactive
+    loop.run(0.05)  # 50ms; mean inactive period=10s, so reliably still inactive
     count_early = len(buffer.window(0.0, 0.06))
-    loop.run(5.0)   # long enough for recovery
-    count_later = len(buffer.window(0.0, 6.0))
+    loop.run(30.0)   # long enough for recovery (mean inactive period = 10s)
+    count_later = len(buffer.window(0.0, 31.0))
     assert count_early == 0
     assert count_later > 0
