@@ -79,7 +79,7 @@ def test_sensor_produces_signal_on_errors():
     signals = s.measure(window)
     assert len(signals) == 1
     assert signals[0].metric == "error_rate"
-    assert signals[0].value > 0.0
+    assert signals[0].value == 1.0
 
 
 def test_sensor_produces_zero_error_rate_on_clean_window():
