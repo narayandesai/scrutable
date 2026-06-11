@@ -73,12 +73,22 @@ class Disturbance:
 
 
 @dataclass
-class Inference:
+class Signal:
+    sensor_id: str
+    metric: str
+    value: float
+    window_start: float
+    window_end: float
+    sample_count: int
+
+
+@dataclass
+class Alarm:
     detector_id: str
-    pathology_type: str
+    fault_type: str
     target_id: str
     target_level: str
-    confidence: float
+    severity: float
     detected_at: float
     window_start: float
     window_end: float

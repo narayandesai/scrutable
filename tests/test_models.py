@@ -7,7 +7,8 @@ from scrutable.models import (
     Response,
     DisturbanceScope,
     Disturbance,
-    Inference,
+    Alarm,
+    Signal,
 )
 
 
@@ -75,15 +76,29 @@ def test_disturbance_fields():
     assert d.node_effects["latency_multiplier"] == 2.0
 
 
-def test_inference_fields():
-    i = Inference(
+def test_alarm_fields():
+    a = Alarm(
         detector_id="d1",
-        pathology_type="hardware_fault",
+        fault_type="hardware_fault",
         target_id="n1",
         target_level="node",
-        confidence=0.9,
+        severity=0.9,
         detected_at=10.0,
         window_start=0.0,
         window_end=10.0,
     )
-    assert i.confidence == 0.9
+    assert a.severity == 0.9
+    assert a.fault_type == "hardware_fault"
+
+
+def test_signal_fields():
+    s = Signal(
+        sensor_id="s1",
+        metric="latency_p99.9",
+        value=0.42,
+        window_start=0.0,
+        window_end=1.0,
+        sample_count=500,
+    )
+    assert s.value == 0.42
+    assert s.sample_count == 500

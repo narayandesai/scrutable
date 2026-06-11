@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Protocol, runtime_checkable
-from scrutable.models import Inference
+from scrutable.models import Alarm
 from scrutable.operations import RolloutSystem, OperationsSystem
 
 
@@ -8,7 +8,7 @@ from scrutable.operations import RolloutSystem, OperationsSystem
 class Actuator(Protocol):
     def act(
         self,
-        inference: Inference,
+        alarm: Alarm,
         sim_time: float,
         rollouts: RolloutSystem,
         ops: OperationsSystem,
