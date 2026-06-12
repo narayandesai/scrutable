@@ -1,7 +1,7 @@
 import numpy as np
 from scrutable.profiles import (
     FieldDist,
-    WorkloadProfile,
+    PlantProfile,
     sample_workload,
     CONSISTENT_FAST,
     HIGH_VARIANCE_LATENCY,
@@ -78,7 +78,7 @@ def test_latency_variance_spectrum_sigmas_strictly_ordered():
 
 
 def test_error_shape_clamped_to_minimum():
-    profile = WorkloadProfile(
+    profile = PlantProfile(
         name="test",
         latency_median=FieldDist(lognormal_mean=-3.0, lognormal_sigma=0.1),
         latency_sigma=FieldDist(lognormal_mean=-2.0, lognormal_sigma=0.1),

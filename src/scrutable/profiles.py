@@ -11,7 +11,7 @@ class FieldDist:
 
 
 @dataclass(frozen=True)
-class WorkloadProfile:
+class PlantProfile:
     name: str
     latency_median: FieldDist
     latency_sigma: FieldDist
@@ -21,7 +21,7 @@ class WorkloadProfile:
 
 
 def sample_workload(
-    profile: WorkloadProfile,
+    profile: PlantProfile,
     workload_id: str,
     rng: np.random.Generator,
 ) -> WorkloadModel:
@@ -38,7 +38,7 @@ def sample_workload(
     )
 
 
-CONSISTENT_FAST = WorkloadProfile(
+CONSISTENT_FAST = PlantProfile(
     name="consistent_fast",
     latency_median=FieldDist(lognormal_mean=math.log(0.05), lognormal_sigma=0.3),
     latency_sigma=FieldDist(lognormal_mean=math.log(0.2), lognormal_sigma=0.2),
@@ -47,7 +47,7 @@ CONSISTENT_FAST = WorkloadProfile(
     noise_sigma=FieldDist(lognormal_mean=math.log(0.005), lognormal_sigma=0.3),
 )
 
-HIGH_VARIANCE_LATENCY = WorkloadProfile(
+HIGH_VARIANCE_LATENCY = PlantProfile(
     name="high_variance_latency",
     latency_median=FieldDist(lognormal_mean=math.log(0.1), lognormal_sigma=1.0),
     latency_sigma=FieldDist(lognormal_mean=math.log(0.5), lognormal_sigma=0.5),
@@ -56,7 +56,7 @@ HIGH_VARIANCE_LATENCY = WorkloadProfile(
     noise_sigma=FieldDist(lognormal_mean=math.log(0.01), lognormal_sigma=0.5),
 )
 
-BURSTY_ERRORS = WorkloadProfile(
+BURSTY_ERRORS = PlantProfile(
     name="bursty_errors",
     latency_median=FieldDist(lognormal_mean=math.log(0.08), lognormal_sigma=0.4),
     latency_sigma=FieldDist(lognormal_mean=math.log(0.3), lognormal_sigma=0.3),
@@ -65,7 +65,7 @@ BURSTY_ERRORS = WorkloadProfile(
     noise_sigma=FieldDist(lognormal_mean=math.log(0.008), lognormal_sigma=0.3),
 )
 
-SLOW_RELIABLE = WorkloadProfile(
+SLOW_RELIABLE = PlantProfile(
     name="slow_reliable",
     latency_median=FieldDist(lognormal_mean=math.log(0.5), lognormal_sigma=0.4),
     latency_sigma=FieldDist(lognormal_mean=math.log(0.3), lognormal_sigma=0.2),
@@ -87,8 +87,8 @@ _SPECTRUM_SHAPE    = FieldDist(lognormal_mean=math.log(1.5), lognormal_sigma=0.0
 _SPECTRUM_NOISE    = FieldDist(lognormal_mean=math.log(0.005), lognormal_sigma=0.0)
 
 
-def _spectrum_profile(name: str, sigma: float) -> WorkloadProfile:
-    return WorkloadProfile(
+def _spectrum_profile(name: str, sigma: float) -> PlantProfile:
+    return PlantProfile(
         name=name,
         latency_median=_SPECTRUM_MEDIAN,
         latency_sigma=FieldDist(lognormal_mean=math.log(sigma), lognormal_sigma=0.0),
@@ -98,7 +98,7 @@ def _spectrum_profile(name: str, sigma: float) -> WorkloadProfile:
     )
 
 
-LATENCY_VARIANCE_SPECTRUM: list[WorkloadProfile] = [
+LATENCY_VARIANCE_SPECTRUM: list[PlantProfile] = [
     _spectrum_profile("variance_v1", sigma=0.1),   # P99.9 ≈ 0.14s, threshold ≈ 0.27s
     _spectrum_profile("variance_v2", sigma=0.3),   # P99.9 ≈ 0.25s, threshold ≈ 0.51s
     _spectrum_profile("variance_v3", sigma=0.6),   # P99.9 ≈ 0.64s, threshold ≈ 1.28s

@@ -36,7 +36,7 @@ from scrutable.detectors.slo import (
 from scrutable.actuator import Actuator
 from scrutable.profiles import (
     FieldDist,
-    WorkloadProfile,
+    PlantProfile,
     sample_workload,
     CONSISTENT_FAST,
     HIGH_VARIANCE_LATENCY,
@@ -85,7 +85,7 @@ __all__ = [
     "ErrorRateSloCalibrator",
     "ErrorRateSloDetector",
     "FieldDist",
-    "WorkloadProfile",
+    "PlantProfile",
     "sample_workload",
     "CONSISTENT_FAST",
     "HIGH_VARIANCE_LATENCY",
