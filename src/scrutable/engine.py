@@ -8,6 +8,7 @@ from scrutable.simulator import ServiceSimulator
 from scrutable.synthesizer import InputSynthesizer
 from scrutable.disturbance import DisturbanceInjector, TimedDisturbance, StochasticDisturbance
 from scrutable.operations import RolloutSystem, OperationsSystem
+from scrutable.sensor import Sensor
 from scrutable.detector import Detector
 from scrutable.actuator import Actuator
 from scrutable.models import WorkloadState, RolloutState
@@ -44,15 +45,19 @@ class SimulationEngine:
         )
         self._rollouts = RolloutSystem()
         self._ops = OperationsSystem(infra)
+        self._sensors: list[Sensor] = []
         self._detectors: list[Detector] = []
         self._actuators: list[Actuator] = []
         self._started: bool = False
 
-    def add_detector(self, detector: Detector) -> None:
-        if detector.tick_interval <= 0:
+    def add_sensor(self, sensor: Sensor) -> None:
+        if sensor.sampling_period <= 0:
             raise ValueError(
-                f"detector.tick_interval must be > 0, got {detector.tick_interval!r}"
+                f"sensor.sampling_period must be > 0, got {sensor.sampling_period!r}"
             )
+        self._sensors.append(sensor)
+
+    def add_detector(self, detector: Detector) -> None:
         self._detectors.append(detector)
 
     def add_actuator(self, actuator: Actuator) -> None:
@@ -81,20 +86,22 @@ class SimulationEngine:
             raise RuntimeError("SimulationEngine.run called more than once")
         self._started = True
         self._synthesizer.start()
-        for detector in self._detectors:
-            self._schedule_detector_tick(detector, 0.0)
+        for sensor in self._sensors:
+            self._schedule_sensor_tick(sensor, 0.0)
         self._loop.run(until)
 
-    def _schedule_detector_tick(self, detector: Detector, current_time: float) -> None:
-        next_tick = current_time + detector.tick_interval
+    def _schedule_sensor_tick(self, sensor: Sensor, current_time: float) -> None:
+        next_tick = current_time + sensor.sampling_period
 
-        def tick(d=detector, t=next_tick) -> None:
-            window = self._buffer.window(t - d.window_size, t)
-            inferences = d.detect(window)
-            for inf in inferences:
-                for act in self._actuators:
-                    act.act(inf, t, self._rollouts, self._ops)
-            self._schedule_detector_tick(d, t)
+        def tick(s=sensor, t=next_tick) -> None:
+            window = self._buffer.window(t - s.window_size, t)
+            signals = s.measure(window)
+            for detector in self._detectors:
+                alarms = detector.detect(signals)
+                for alarm in alarms:
+                    for act in self._actuators:
+                        act.act(alarm, t, self._rollouts, self._ops)
+            self._schedule_sensor_tick(s, t)
 
         self._loop.schedule(next_tick, tick)
 
