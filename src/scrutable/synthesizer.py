@@ -12,7 +12,7 @@ class InputConfig:
     workload_rates: dict[str, float]
 
 
-class InputSynthesizer:
+class InputProcess:
     def __init__(
         self,
         mix: WorkloadMix,

@@ -4,7 +4,7 @@ from scrutable.observations import ObservationBuffer
 from scrutable.models import WorkloadModel, WorkloadState
 from scrutable.workload import WorkloadRegistry
 from scrutable.simulator import ServiceSimulator
-from scrutable.synthesizer import InputSynthesizer
+from scrutable.synthesizer import InputProcess
 from scrutable.traffic import WorkloadEntry, WorkloadMix, SinusoidalCurve, MarkovActivity
 
 
@@ -31,7 +31,7 @@ def _make_synth(tiny_infra, mix: WorkloadMix, seed: int = 42):
     buffer = ObservationBuffer()
     rng = np.random.default_rng(seed)
     sim = ServiceSimulator(loop, tiny_infra, registry, workload_states, buffer, rng)
-    synth = InputSynthesizer(mix, loop, sim, rng)
+    synth = InputProcess(mix, loop, sim, rng)
     return loop, synth, buffer
 
 

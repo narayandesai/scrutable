@@ -5,7 +5,7 @@ from scrutable.plant import Plant
 from scrutable.workload import WorkloadRegistry
 from scrutable.observations import ObservationBuffer
 from scrutable.simulator import ServiceSimulator
-from scrutable.synthesizer import InputSynthesizer
+from scrutable.synthesizer import InputProcess
 from scrutable.disturbance import DisturbanceInjector, TimedDisturbance, StochasticDisturbance
 from scrutable.operations import RolloutSystem, OperationsSystem
 from scrutable.sensor import Sensor
@@ -37,7 +37,7 @@ class SimulationEngine:
         self._simulator = ServiceSimulator(
             self._loop, infra, registry, self._workload_states, self._buffer, self._rng
         )
-        self._synthesizer = InputSynthesizer(
+        self._synthesizer = InputProcess(
             mix, self._loop, self._simulator, self._rng
         )
         self._injector = DisturbanceInjector(
