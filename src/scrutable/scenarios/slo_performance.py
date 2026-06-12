@@ -3,13 +3,12 @@ from dataclasses import dataclass
 from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 from scrutable.plant import PlantConfig, Plant
-from scrutable.workload import WorkloadRegistry
 from scrutable.models import Disturbance, DisturbanceScope
 from scrutable.disturbance import TimedDisturbance
-from scrutable.synthesizer import InputConfig
 from scrutable.engine import SimulationEngine
-from scrutable.profiles import WorkloadProfile, sample_workload
-from scrutable.detectors.slo import LatencySloCalibrator, LatencySloDetector, SloTarget
+from scrutable.traffic import WorkloadEntry, WorkloadMix
+from scrutable.profiles import PlantProfile, sample_workload
+from scrutable.detectors.slo import LatencySloCalibrator, LatencySloSensor, LatencySloDetector, SloTarget
 
 
 @dataclass
@@ -36,7 +35,7 @@ def _make_plant() -> Plant:
 
 
 def _run_one(
-    profile: WorkloadProfile,
+    profile: PlantProfile,
     window_size: float,
     seed: int,
     rate: float,
@@ -51,19 +50,14 @@ def _run_one(
     rng = np.random.default_rng(seed)
     plant = _make_plant()
 
-    registry = WorkloadRegistry()
-    rates: dict[str, float] = {}
-    for i in range(n_workloads):
-        wid = f"{profile.name}-{i}"
-        registry.register(sample_workload(profile, wid, rng))
-        rates[wid] = rate
+    share = 1.0 / n_workloads
+    entries = [
+        WorkloadEntry(model=sample_workload(profile, f"{profile.name}-{i}", rng), share=share)
+        for i in range(n_workloads)
+    ]
+    mix = WorkloadMix(total_rate=rate * n_workloads, period=3600.0, entries=entries)
 
-    engine = SimulationEngine(
-        infra=plant,
-        registry=registry,
-        synth_config=InputConfig(workload_rates=rates),
-        seed=seed,
-    )
+    engine = SimulationEngine(infra=plant, mix=mix, seed=seed)
 
     disturbance = Disturbance(
         disturbance_id="perf-sweep",
@@ -85,7 +79,8 @@ def _run_one(
         threshold=calibrated.threshold,
         window_size=window_size,
     )
-    detector = LatencySloDetector(detector_id="perf", target=detection_target, tick_interval=window_size)
+    sensor = LatencySloSensor(sensor_id="perf", target=detection_target, sampling_period=window_size)
+    detector = LatencySloDetector(detector_id="perf", target=detection_target)
 
     tp = 0
     fp = 0
@@ -98,7 +93,9 @@ def _run_one(
     while t + window_size <= total_duration:
         responses = buf.window(t, t + window_size)
         if responses:
-            fired = bool(detector.detect(responses))
+            signals = sensor.measure(responses)
+            alarms = detector.detect(signals)
+            fired = bool(alarms)
             # disturbance window if any overlap with [calibration_duration, total_duration)
             is_disturbance = t + window_size > calibration_duration
             if is_disturbance:
@@ -143,7 +140,7 @@ def _run_one_kwargs(kwargs: dict) -> PerformancePoint:
 
 
 def sweep_slo_performance(
-    profiles: list[WorkloadProfile],
+    profiles: list[PlantProfile],
     window_sizes: list[float],
     seed: int = 42,
     rate: float = 5.0,

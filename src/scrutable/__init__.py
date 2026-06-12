@@ -28,11 +28,13 @@ from scrutable.models import (
 from scrutable.disturbance import TimedDisturbance, StochasticDisturbance
 from scrutable.operations import RolloutSystem, OperationsSystem
 from scrutable.rollout import Rollout, GateCallback
+from scrutable.sensor import Sensor
 from scrutable.detector import Detector
 from scrutable.detectors.slo import (
-    SloTarget, LatencySloCalibrator, LatencySloDetector,
-    ErrorRateSloTarget, ErrorRateSloCalibrator, ErrorRateSloDetector,
+    SloTarget, LatencySloCalibrator, LatencySloSensor, LatencySloDetector,
+    ErrorRateSloTarget, ErrorRateSloCalibrator, ErrorRateSloSensor, ErrorRateSloDetector,
 )
+from scrutable.synthesizer import InputProcess
 from scrutable.actuator import Actuator
 from scrutable.profiles import (
     FieldDist,
@@ -76,14 +78,18 @@ __all__ = [
     "GateCallback",
     "RolloutSystem",
     "OperationsSystem",
+    "Sensor",
     "Detector",
     "Actuator",
     "SloTarget",
     "LatencySloCalibrator",
+    "LatencySloSensor",
     "LatencySloDetector",
     "ErrorRateSloTarget",
     "ErrorRateSloCalibrator",
+    "ErrorRateSloSensor",
     "ErrorRateSloDetector",
+    "InputProcess",
     "FieldDist",
     "PlantProfile",
     "sample_workload",

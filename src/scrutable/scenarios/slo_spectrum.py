@@ -2,13 +2,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import numpy as np
 from scrutable.plant import PlantConfig, Plant
-from scrutable.workload import WorkloadRegistry
 from scrutable.models import Disturbance, DisturbanceScope
 from scrutable.disturbance import TimedDisturbance
-from scrutable.synthesizer import InputConfig
 from scrutable.engine import SimulationEngine
-from scrutable.profiles import WorkloadProfile, sample_workload
-from scrutable.detectors.slo import LatencySloCalibrator, LatencySloDetector, SloTarget
+from scrutable.traffic import WorkloadEntry, WorkloadMix
+from scrutable.profiles import PlantProfile, sample_workload
+from scrutable.detectors.slo import LatencySloCalibrator, LatencySloSensor, LatencySloDetector, SloTarget
 
 
 @dataclass
@@ -60,7 +59,7 @@ def _compute_window(responses, t_start: float, t_end: float) -> TimeWindow | Non
 
 
 def run_slo_scenario(
-    profile: WorkloadProfile,
+    profile: PlantProfile,
     seed: int = 42,
     rate: float = 1000.0,       # req/s per workload
     calibration_duration: float = 10.0,  # seconds of baseline before disturbance
@@ -73,19 +72,14 @@ def run_slo_scenario(
     rng = np.random.default_rng(seed)
     plant = _make_plant()
 
-    registry = WorkloadRegistry()
-    rates: dict[str, float] = {}
-    for i in range(n_workloads):
-        wid = f"{profile.name}-{i}"
-        registry.register(sample_workload(profile, wid, rng))
-        rates[wid] = rate
+    share = 1.0 / n_workloads
+    entries = [
+        WorkloadEntry(model=sample_workload(profile, f"{profile.name}-{i}", rng), share=share)
+        for i in range(n_workloads)
+    ]
+    mix = WorkloadMix(total_rate=rate * n_workloads, period=3600.0, entries=entries)
 
-    engine = SimulationEngine(
-        infra=plant,
-        registry=registry,
-        synth_config=InputConfig(workload_rates=rates),
-        seed=seed,
-    )
+    engine = SimulationEngine(infra=plant, mix=mix, seed=seed)
 
     disturbance = Disturbance(
         disturbance_id="slo-demo",
@@ -104,10 +98,14 @@ def run_slo_scenario(
     calibrator = LatencySloCalibrator(multiplier=2.0)
     target = calibrator.calibrate(buf, calibration_end=calibration_duration, percentile=99.9, window_size=window_size)
 
+    sensor_calibrated = LatencySloSensor(
+        sensor_id="slo",
+        target=target,
+        sampling_period=window_size,
+    )
     detector_calibrated = LatencySloDetector(
         detector_id="slo",
         target=target,
-        tick_interval=window_size,
     )
 
     windows: list[TimeWindow] = []
@@ -118,8 +116,9 @@ def run_slo_scenario(
         if tw is not None:
             windows.append(tw)
             if detection_time is None and t >= calibration_duration:
-                inferences = detector_calibrated.detect(buf.window(t, t + window_size))
-                if inferences:
+                signals = sensor_calibrated.measure(buf.window(t, t + window_size))
+                alarms = detector_calibrated.detect(signals)
+                if alarms:
                     detection_time = t + window_size
         t += window_size
 
