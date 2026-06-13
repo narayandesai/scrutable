@@ -226,6 +226,62 @@ def make_high_variance(
     return PlantProfile(name="high_variance", entries=entries)
 
 
+def make_long_tail(
+    n_fast: int = 49_500,
+    n_slow: int = 500,
+    onset_rate: float = 0.1,
+    recovery_rate: float = 0.9,
+    rng: np.random.Generator | None = None,
+) -> PlantProfile:
+    """Long-tail service with 50k workloads whose medians vary across two populations.
+
+    Aggregate percentiles (hierarchical lognormal, 99% fast / 1% slow):
+      P90=0.5s, P99=1s, P99.9=3600s (60 min), P99.99=7200s (120 min)
+
+    Fast group (99%): median_i ~ LogN(log(0.339), σ_m=0.200), per-request σ=0.211
+                      → σ_eff = √(0.200²+0.211²) = 0.291
+    Slow group (1%):  median_i ~ LogN(log(1527),  σ_m=0.450), per-request σ=0.488
+                      → σ_eff = √(0.450²+0.488²) = 0.664
+
+    MarkovActivity default: ~10% active at steady state (onset=0.1, recovery=0.9).
+    For 10k aggregate QPS, pass total_rate=100_000 to build_workload_mix.
+    """
+    if rng is None:
+        rng = np.random.default_rng(42)
+    activity = MarkovActivity(onset_rate=onset_rate, recovery_rate=recovery_rate, initial_active=False)
+    fast_medians = rng.lognormal(np.log(0.339), 0.200, n_fast)
+    slow_medians = rng.lognormal(np.log(1527.0), 0.450, n_slow)
+    share = 1.0 / (n_fast + n_slow)
+    entries = (
+        [PlantEntry(spec=WorkloadSpec(latency_median=float(m), latency_sigma=0.211,
+                                     error_scale=50000.0, error_shape=1.5, noise_sigma=0.005),
+                    share=share, activity=activity)
+         for m in fast_medians] +
+        [PlantEntry(spec=WorkloadSpec(latency_median=float(m), latency_sigma=0.488,
+                                     error_scale=50000.0, error_shape=1.5, noise_sigma=1.0),
+                    share=share, activity=activity)
+         for m in slow_medians]
+    )
+    return PlantProfile(name="long_tail", entries=entries)
+
+
+def split_profile(profile: PlantProfile, n: int) -> list[PlantProfile]:
+    """Partition a PlantProfile's entries into n sub-profiles for parallel simulation.
+
+    Each chunk keeps the original entry shares and is simulated at the same total_rate
+    as the full profile — per-workload rates are preserved automatically.
+    """
+    entries = profile.entries
+    base, remainder = divmod(len(entries), n)
+    chunks = []
+    start = 0
+    for i in range(n):
+        end = start + base + (1 if i < remainder else 0)
+        chunks.append(PlantProfile(name=f"{profile.name}_chunk{i}", entries=entries[start:end]))
+        start = end
+    return chunks
+
+
 LATENCY_VARIANCE_SPECTRUM: list[PlantProfile] = [
     _spectrum_profile("variance_v1", sigma=0.1),   # P99.9 ≈ 0.14s
     _spectrum_profile("variance_v2", sigma=0.3),   # P99.9 ≈ 0.25s

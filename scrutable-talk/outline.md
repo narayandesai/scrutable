@@ -22,9 +22,15 @@
 - Scrutable: discrete-event simulator, parametric workload models, fault injection with known timing and scope
 - The key property: you know exactly what you injected and when — so you can measure detection latency, false positive rate, blast radius
 - Reproducible across the full plant family
-- [Show a single low-variance service: clean burn-in, disturbance injected, detector fires — ground truth confirmed]
+- [Demo: side-by-side comparison — same +300ms disturbance on two services]
 
-<!-- deferred: spectrum sweep (5 services, low→high variance) — pull back in if time allows -->
+```
+Profile          σ      P99.9 recall   P50 recall   P50 det. latency
+SPHERICAL_COW   0.25       1.00           1.00            ~1s
+high_variance   1.50       0.00           1.00            ~1s
+```
+
+- Same disturbance. P99.9 catches it on the easy service, completely misses it on the hard one. P50 catches both in one window. Section 4 explains why.
 
 ## 4. One controller, done rigorously: SLO thresholds (5 min)
 

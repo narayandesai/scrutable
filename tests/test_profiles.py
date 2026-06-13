@@ -199,7 +199,7 @@ def test_sample_plant_profile_reproducible():
 # --- HIGH_VARIANCE factory ---
 
 import math
-from scrutable.profiles import make_high_variance
+from scrutable.profiles import make_high_variance, make_long_tail
 from scipy.stats import norm
 
 def _aggregate_cdf(x: float, p_fast: float, mu_fast: float, s_fast: float,
@@ -232,9 +232,81 @@ def test_high_variance_aggregate_p999_approx():
     p999 = _aggregate_cdf(10800.0, 0.99, 0.6, 0.40, 1577.0, 1.5)
     assert abs(p999 - 0.999) < 0.002
 
+# --- make_long_tail ---
+# Mixture: 99% fast lognormal(median≈0.339s, σ=0.291) + 1% slow lognormal(median≈1527s, σ=0.664)
+# Targets: P90=0.5s, P99=1s, P99.9=3600s (60 min), P99.99=7200s (120 min)
+
+_LT_P_FAST = 0.99
+_LT_MU_FAST, _LT_S_FAST = math.log(0.339), 0.291
+_LT_MU_SLOW, _LT_S_SLOW = math.log(1527.0), 0.664
+
+def _lt_cdf(x: float) -> float:
+    return (_LT_P_FAST * norm.cdf((math.log(x) - _LT_MU_FAST) / _LT_S_FAST) +
+            (1 - _LT_P_FAST) * norm.cdf((math.log(x) - _LT_MU_SLOW) / _LT_S_SLOW))
+
+def test_long_tail_is_plant_profile():
+    assert isinstance(make_long_tail(), PlantProfile)
+
+def test_long_tail_default_entry_count():
+    assert len(make_long_tail().entries) == 50_000
+
+def test_long_tail_entry_count_parameterized():
+    assert len(make_long_tail(n_fast=99, n_slow=1).entries) == 100
+
+def test_long_tail_aggregate_p90():
+    assert abs(_lt_cdf(0.5) - 0.90) < 0.01
+
+def test_long_tail_aggregate_p99():
+    assert abs(_lt_cdf(1.0) - 0.99) < 0.005
+
+def test_long_tail_aggregate_p999():
+    assert abs(_lt_cdf(3600.0) - 0.999) < 0.002
+
+def test_long_tail_aggregate_p9999():
+    assert abs(_lt_cdf(7200.0) - 0.9999) < 0.001
+
+
 def test_high_variance_mostly_inactive():
     profile = make_high_variance()
     for entry in profile.entries[:10]:
         assert entry.activity is not None
         fraction_active = entry.activity.onset_rate / (entry.activity.onset_rate + entry.activity.recovery_rate)
         assert fraction_active < 0.05
+
+
+def test_long_tail_entries_have_activity():
+    profile = make_long_tail(n_fast=99, n_slow=1)
+    for entry in profile.entries:
+        assert entry.activity is not None
+
+
+def test_split_profile_chunk_count():
+    from scrutable.profiles import split_profile
+    chunks = split_profile(SPHERICAL_COW, n=1)
+    assert len(chunks) == 1
+
+def test_split_profile_entry_count():
+    from scrutable.profiles import split_profile, make_long_tail
+    profile = make_long_tail(n_fast=99, n_slow=1)
+    chunks = split_profile(profile, n=4)
+    assert sum(len(c.entries) for c in chunks) == 100
+
+def test_split_profile_preserves_entries():
+    from scrutable.profiles import split_profile, make_long_tail
+    profile = make_long_tail(n_fast=99, n_slow=1)
+    chunks = split_profile(profile, n=4)
+    all_entries = [e for c in chunks for e in c.entries]
+    assert all_entries == list(profile.entries)
+
+def test_split_profile_names():
+    from scrutable.profiles import split_profile, make_long_tail
+    profile = make_long_tail(n_fast=99, n_slow=1)
+    chunks = split_profile(profile, n=3)
+    assert all(c.name.startswith("long_tail_chunk") for c in chunks)
+
+def test_long_tail_steady_state_fraction_near_ten_percent():
+    profile = make_long_tail(n_fast=99, n_slow=1)
+    for entry in profile.entries:
+        act = entry.activity
+        fraction = act.onset_rate / (act.onset_rate + act.recovery_rate)
+        assert abs(fraction - 0.10) < 0.01

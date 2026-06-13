@@ -52,6 +52,8 @@ from scrutable.profiles import (
     SLOW_RELIABLE,
     LATENCY_VARIANCE_SPECTRUM,
     make_high_variance,
+    make_long_tail,
+    split_profile,
 )
 
 __all__ = [
@@ -113,4 +115,6 @@ __all__ = [
     "SLOW_RELIABLE",
     "LATENCY_VARIANCE_SPECTRUM",
     "make_high_variance",
+    "make_long_tail",
+    "split_profile",
 ]
