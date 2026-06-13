@@ -14,7 +14,7 @@ class SloTarget:
 
 @dataclass
 class LatencySloCalibrator:
-    multiplier: float
+    target_fpr: float = 0.001
 
     def calibrate(
         self,
@@ -23,12 +23,21 @@ class LatencySloCalibrator:
         percentile: float,
         window_size: float,
     ) -> SloTarget:
-        window = buf.window(calibration_end - window_size, calibration_end)
-        if not window:
-            raise ValueError("No responses in calibration window — cannot calibrate SLO target")
-        latencies = np.array([r.latency for r in window])
-        p = float(np.percentile(latencies, percentile))
-        return SloTarget(percentile=percentile, threshold=p * self.multiplier, window_size=window_size)
+        estimates: list[float] = []
+        t = 0.0
+        while t + window_size <= calibration_end:
+            window = buf.window(t, t + window_size)
+            if window:
+                latencies = np.array([r.latency for r in window])
+                estimates.append(float(np.percentile(latencies, percentile)))
+            t += window_size
+        if len(estimates) < 2:
+            raise ValueError(
+                f"Empirical calibration needs ≥2 windows but got {len(estimates)}. "
+                f"Increase calibration_duration beyond {2 * window_size:.1f}s or reduce window_size."
+            )
+        threshold = float(np.percentile(estimates, (1.0 - self.target_fpr) * 100.0))
+        return SloTarget(percentile=percentile, threshold=threshold, window_size=window_size)
 
 
 class LatencySloSensor:

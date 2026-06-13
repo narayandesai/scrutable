@@ -38,13 +38,20 @@ from scrutable.synthesizer import InputProcess
 from scrutable.actuator import Actuator
 from scrutable.profiles import (
     FieldDist,
+    WorkloadSpec,
+    PlantEntry,
     PlantProfile,
+    PlantProfileSampler,
+    build_workload_mix,
+    sample_plant_profile,
     sample_workload,
+    SPHERICAL_COW,
     CONSISTENT_FAST,
     HIGH_VARIANCE_LATENCY,
     BURSTY_ERRORS,
     SLOW_RELIABLE,
     LATENCY_VARIANCE_SPECTRUM,
+    make_high_variance,
 )
 
 __all__ = [
@@ -91,11 +98,19 @@ __all__ = [
     "ErrorRateSloDetector",
     "InputProcess",
     "FieldDist",
+    "FieldDist",
+    "WorkloadSpec",
+    "PlantEntry",
     "PlantProfile",
+    "PlantProfileSampler",
+    "build_workload_mix",
+    "sample_plant_profile",
     "sample_workload",
+    "SPHERICAL_COW",
     "CONSISTENT_FAST",
     "HIGH_VARIANCE_LATENCY",
     "BURSTY_ERRORS",
     "SLOW_RELIABLE",
     "LATENCY_VARIANCE_SPECTRUM",
+    "make_high_variance",
 ]

@@ -40,54 +40,78 @@ def make_responses_with_errors(n: int, error_rate: float, issued_at_start: float
     ]
 
 
-# --- LatencySloCalibrator (unchanged) ---
+# --- LatencySloCalibrator ---
 
-def test_burn_in_calibrator_returns_slo_target():
+def _make_buf_lognormal(n_windows: int, window_size: float, n_per_window: int,
+                        mu: float, sigma: float, rng: np.random.Generator) -> ObservationBuffer:
     buf = ObservationBuffer()
-    for r in make_responses(2000, latency=0.05):
-        buf.append(r)
-    calibrator = LatencySloCalibrator(multiplier=2.0)
-    target = calibrator.calibrate(buf, calibration_end=2.0, percentile=99.9, window_size=2.0)
+    for w in range(n_windows):
+        latencies = rng.lognormal(mu, sigma, n_per_window)
+        for i, lat in enumerate(latencies):
+            buf.append(Response(
+                request_id=f"r{w}-{i}", workload_id="wl", node_id="n", cluster_id="c", region_id="r",
+                issued_at=w * window_size + i * (window_size / n_per_window),
+                latency=float(lat), error_code=0,
+            ))
+    return buf
+
+
+def test_empirical_calibrator_returns_slo_target():
+    rng = np.random.default_rng(0)
+    buf = _make_buf_lognormal(100, 1.0, 1000, -2.3, 0.3, rng)
+    target = LatencySloCalibrator(target_fpr=0.01).calibrate(buf, calibration_end=100.0, percentile=99.9, window_size=1.0)
     assert isinstance(target, SloTarget)
     assert target.percentile == 99.9
-    assert target.window_size == 2.0
+    assert target.window_size == 1.0
 
 
-def test_burn_in_calibrator_threshold_above_baseline():
-    buf = ObservationBuffer()
-    for r in make_responses(2000, latency=0.05):
-        buf.append(r)
-    target = LatencySloCalibrator(multiplier=2.0).calibrate(buf, calibration_end=2.0, percentile=99.9, window_size=2.0)
-    assert target.threshold > 0.05
-
-
-def test_burn_in_calibrator_threshold_scales_with_multiplier():
-    buf = ObservationBuffer()
-    for r in make_responses(2000, latency=0.05):
-        buf.append(r)
-    t2 = LatencySloCalibrator(multiplier=2.0).calibrate(buf, calibration_end=2.0, percentile=99.9, window_size=2.0)
-    t3 = LatencySloCalibrator(multiplier=3.0).calibrate(buf, calibration_end=2.0, percentile=99.9, window_size=2.0)
-    assert t3.threshold > t2.threshold
-
-
-def test_burn_in_calibrator_respects_percentile():
-    buf = ObservationBuffer()
+def test_empirical_calibrator_threshold_above_zero():
     rng = np.random.default_rng(0)
-    for i in range(5000):
-        r = Response(
-            request_id=f"r{i}", workload_id="w", node_id="n", cluster_id="c", region_id="r",
-            issued_at=i * 0.001, latency=float(rng.lognormal(-2.3, 0.5)), error_code=0,
-        )
-        buf.append(r)
-    t90 = LatencySloCalibrator(multiplier=1.0).calibrate(buf, calibration_end=5.0, percentile=90.0, window_size=5.0)
-    t999 = LatencySloCalibrator(multiplier=1.0).calibrate(buf, calibration_end=5.0, percentile=99.9, window_size=5.0)
+    buf = _make_buf_lognormal(100, 1.0, 1000, -2.3, 0.3, rng)
+    target = LatencySloCalibrator(target_fpr=0.01).calibrate(buf, calibration_end=100.0, percentile=99.9, window_size=1.0)
+    assert target.threshold > 0.0
+
+
+def test_empirical_calibrator_threshold_is_high_quantile_of_per_window_estimates():
+    # With target_fpr=0.01 (99th percentile of burn-in window estimates), at most ~1% of
+    # burn-in windows should exceed the threshold in-sample.
+    rng = np.random.default_rng(42)
+    n_windows = 200
+    buf = _make_buf_lognormal(n_windows, 1.0, 500, -2.3, 0.3, rng)
+    target = LatencySloCalibrator(target_fpr=0.01).calibrate(buf, calibration_end=float(n_windows), percentile=99.9, window_size=1.0)
+    # count how many burn-in windows exceed the threshold
+    exceed = 0
+    for w in range(n_windows):
+        window = buf.window(float(w), float(w + 1))
+        latencies = np.array([r.latency for r in window])
+        if float(np.percentile(latencies, 99.9)) > target.threshold:
+            exceed += 1
+    assert exceed / n_windows <= 0.01 + 1e-9
+
+
+def test_empirical_calibrator_higher_variance_yields_higher_threshold():
+    rng_lo = np.random.default_rng(0)
+    rng_hi = np.random.default_rng(0)
+    buf_lo = _make_buf_lognormal(100, 1.0, 1000, -2.3, 0.3, rng_lo)
+    buf_hi = _make_buf_lognormal(100, 1.0, 1000, -2.3, 1.5, rng_hi)
+    t_lo = LatencySloCalibrator(target_fpr=0.01).calibrate(buf_lo, calibration_end=100.0, percentile=99.9, window_size=1.0)
+    t_hi = LatencySloCalibrator(target_fpr=0.01).calibrate(buf_hi, calibration_end=100.0, percentile=99.9, window_size=1.0)
+    assert t_hi.threshold > t_lo.threshold
+
+
+def test_empirical_calibrator_respects_percentile():
+    rng = np.random.default_rng(0)
+    buf = _make_buf_lognormal(100, 1.0, 1000, -2.3, 0.5, rng)
+    t90 = LatencySloCalibrator(target_fpr=0.01).calibrate(buf, calibration_end=100.0, percentile=90.0, window_size=1.0)
+    t999 = LatencySloCalibrator(target_fpr=0.01).calibrate(buf, calibration_end=100.0, percentile=99.9, window_size=1.0)
     assert t999.threshold > t90.threshold
 
 
-def test_burn_in_calibrator_raises_on_empty_window():
-    buf = ObservationBuffer()
-    with pytest.raises(ValueError):
-        LatencySloCalibrator(multiplier=2.0).calibrate(buf, calibration_end=2.0, percentile=99.9, window_size=2.0)
+def test_empirical_calibrator_raises_with_fewer_than_two_windows():
+    rng = np.random.default_rng(0)
+    buf = _make_buf_lognormal(1, 1.0, 1000, -2.3, 0.3, rng)
+    with pytest.raises(ValueError, match="calibration"):
+        LatencySloCalibrator(target_fpr=0.01).calibrate(buf, calibration_end=1.0, percentile=99.9, window_size=1.0)
 
 
 # --- LatencySloSensor ---

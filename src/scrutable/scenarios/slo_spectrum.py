@@ -5,8 +5,7 @@ from scrutable.plant import PlantConfig, Plant
 from scrutable.models import Disturbance, DisturbanceScope
 from scrutable.disturbance import TimedDisturbance
 from scrutable.engine import SimulationEngine
-from scrutable.traffic import WorkloadEntry, WorkloadMix
-from scrutable.profiles import PlantProfile, sample_workload
+from scrutable.profiles import PlantProfile, build_workload_mix
 from scrutable.detectors.slo import LatencySloCalibrator, LatencySloSensor, LatencySloDetector, SloTarget
 
 
@@ -62,22 +61,14 @@ def run_slo_scenario(
     profile: PlantProfile,
     seed: int = 42,
     rate: float = 1000.0,       # req/s per workload
-    calibration_duration: float = 10.0,  # seconds of baseline before disturbance
-    post_disturbance: float = 20.0,  # seconds after disturbance injection
-    n_workloads: int = 10,
-    disturbance_addend: float = 1.0,  # additive latency penalty in seconds on affected nodes
-    disturbance_coverage: float = 0.5,  # fraction of nodes affected
-    window_size: float = 1.0,   # time-series window width in seconds
+    calibration_duration: float = 10.0,
+    post_disturbance: float = 20.0,
+    disturbance_addend: float = 1.0,
+    disturbance_coverage: float = 0.5,
+    window_size: float = 1.0,
 ) -> ScenarioResult:
-    rng = np.random.default_rng(seed)
     plant = _make_plant()
-
-    share = 1.0 / n_workloads
-    entries = [
-        WorkloadEntry(model=sample_workload(profile, f"{profile.name}-{i}", rng), share=share)
-        for i in range(n_workloads)
-    ]
-    mix = WorkloadMix(total_rate=rate * n_workloads, period=3600.0, entries=entries)
+    mix = build_workload_mix(profile, total_rate=rate * len(profile.entries), period=3600.0)
 
     engine = SimulationEngine(infra=plant, mix=mix, seed=seed)
 
