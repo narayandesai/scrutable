@@ -1,0 +1,14 @@
+# Talk TODO
+
+- [ ] Increase scale of simulation
+- [x] Add workload percentage and time of day density: workloads should carry a percentage of total traffic (summing to 1.0 across all workloads) and an optional diurnal density curve so that traffic rate varies by time of day. Useful for modeling realistic multi-workload traffic mixes and load patterns.
+- [ ] Stochastic disturbances: add a two-state Markov disturbance type that operates at node-set level (a subset of nodes alternates between normal and degraded states). Parameters: onset rate λ (good→bad), recovery rate μ (bad→good), scope (which nodes are subject to transitions), and effect (latency_addend or error_rate during degraded state). Models operational phenomena like cache undersizing (low μ, rare onset), racey errors (short high-μ bursts), or noisy-neighbor effects on a cell. Detection behavior depends on the relationship between burst duration (1/μ) and window size — this is the interesting control theory angle. Requires a new timed event type in the simulator for state transitions.
+- [ ] Workload shifts over time: calibrated SLO thresholds become stale when the underlying workload distribution changes (traffic mix shift, new feature rollout changing latency profile). Need a way to detect when recalibration is needed, or to model drift explicitly in the simulation.
+- [ ] Add empirical SNR to PerformancePoint: signal = mean shift in observed P99.9 across post-disturbance windows vs baseline; noise = std dev of P99.9 across burn-in windows. SNR < 1 means the disturbance is buried in estimator noise regardless of W. Requires storing per-window percentile values during the sweep, not just the binary fired/not. Think carefully about whether to report SNR per window-size or once per profile (it's independent of W for large enough windows).
+- [ ] Calibrate realistic latency and disturbance patterns: current LATENCY_VARIANCE_SPECTRUM uses synthetic lognormal sigmas (0.1–1.5) and a fixed +0.8s addend. Ground these in real service data — pick sigma values that match observed P50/P99 ratios for fast/slow/noisy services, and pick disturbance magnitudes that correspond to realistic degradation events (e.g. a slow dependency adding 50ms at P99, a GC pause adding 200ms at P99.9). The 3600s sweep showed v3–v5 are essentially undetectable with the current addend, which may not reflect realistic operational conditions.
+- [ ] Refine outline
+- [x] Map current implementation naming to control theory vocabulary
+- [ ] Build a development plan
+- [ ] Design progressive rollout demo: failure mode, service profiles, scenarios
+- [ ] Explore low QPS dynamics: percentile estimation breaks down at low event rates — understand the boundary and whether it's worth modeling
+- [ ] Live replay web view: run simulation to completion, then replay results progressively in browser via Plotly Dash — show accumulating P50/P90/P99/P99.9 time series with playback speed control
