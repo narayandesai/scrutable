@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import numpy as np
 from scrutable.models import Signal, Alarm
 from scrutable.observations import ObservationBuffer
 from scrutable.window_result import WindowResult
@@ -35,7 +36,6 @@ class LatencySloCalibrator:
                 f"Empirical calibration needs ≥2 windows but got {len(estimates)}. "
                 f"Increase calibration_duration beyond {2 * window_size:.1f}s or reduce window_size."
             )
-        import numpy as np
         threshold = float(np.percentile(estimates, (1.0 - self.target_fpr) * 100.0))
         return SloTarget(percentile=percentile, threshold=threshold, window_size=window_size)
 
