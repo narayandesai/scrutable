@@ -3,7 +3,7 @@ import numpy as np
 from scrutable.event_loop import EventLoop
 from scrutable.plant import Plant
 from scrutable.workload import WorkloadRegistry
-from scrutable.observations import ObservationBuffer
+from scrutable.observations import ObservationBuffer, NumpyObservationBuffer
 from scrutable.simulator import ServiceSimulator
 from scrutable.synthesizer import InputProcess
 from scrutable.disturbance import DisturbanceInjector, TimedDisturbance, StochasticDisturbance
@@ -33,7 +33,7 @@ class SimulationEngine:
         registry = WorkloadRegistry()
         for entry in mix.entries:
             registry.register(entry.model)
-        self._buffer = ObservationBuffer()
+        self._buffer = NumpyObservationBuffer()
         self._simulator = ServiceSimulator(
             self._loop, infra, registry, self._workload_states, self._buffer, self._rng
         )
