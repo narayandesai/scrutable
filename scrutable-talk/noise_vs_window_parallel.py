@@ -39,7 +39,28 @@ COMMON = dict(
     disturbance_coverage=DIST_COVERAGE,
 )
 
+def _write_csv(results: dict[str, dict], window_sizes: list[float], path: "Path") -> None:
+    import csv
+    percentiles = (50.0, 75.0, 90.0, 99.0, 99.9)
+    fieldnames = ["profile", "window_size", "recall", "fpr",
+                  *[f"noise_p{p}".replace(".", "_") for p in percentiles],
+                  *[f"snr_p{p}".replace(".", "_") for p in percentiles]]
+    with path.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        for name, ws_map in results.items():
+            for ws in window_sizes:
+                p = ws_map[ws]
+                row = {"profile": name, "window_size": ws,
+                       "recall": p.recall, "fpr": p.fpr}
+                for pct in percentiles:
+                    row[f"noise_p{pct}".replace(".", "_")] = p.noise.get(pct)
+                    row[f"snr_p{pct}".replace(".", "_")] = p.snr.get(pct)
+                w.writerow(row)
+
+
 if __name__ == "__main__":
+    from pathlib import Path
     t0 = time.time()
 
     sc_jobs = [dict(
@@ -58,7 +79,7 @@ if __name__ == "__main__":
 
     chunk_responses: dict[str, list] = {"spherical_cow": [], "long_tail": []}
 
-    with ProcessPoolExecutor(max_workers=15) as pool:
+    with ProcessPoolExecutor(max_workers=4) as pool:
         futures = {pool.submit(_run_chunk_by_index_kwargs, kw): name for name, kw in all_jobs}
         for fut in as_completed(futures):
             name = futures[fut]
@@ -111,3 +132,9 @@ if __name__ == "__main__":
     print()
     print("If 'wider windows fix P99.9': LT noise(P99.9) drops like SC noise(P99.9).")
     print("If mix-shift dominated: ratio stays large or grows.")
+
+    out_dir = Path(__file__).parent / "output"
+    out_dir.mkdir(exist_ok=True)
+    csv_path = out_dir / "noise_vs_window_parallel.csv"
+    _write_csv(results, WINDOW_SIZES, csv_path)
+    print(f"\nResults saved to {csv_path}")

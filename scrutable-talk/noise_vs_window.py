@@ -32,7 +32,27 @@ def _sweep(profile_name: str, total_rate: float) -> list:
     )
 
 
+def _write_csv(results: dict[str, list], path: "Path") -> None:
+    import csv
+    percentiles = (50.0, 75.0, 90.0, 99.0, 99.9)
+    fieldnames = ["profile", "window_size", "recall", "fpr",
+                  *[f"noise_p{p}".replace(".", "_") for p in percentiles],
+                  *[f"snr_p{p}".replace(".", "_") for p in percentiles]]
+    with path.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        for name, pts in results.items():
+            for p in pts:
+                row = {"profile": name, "window_size": p.window_size,
+                       "recall": p.recall, "fpr": p.fpr}
+                for pct in percentiles:
+                    row[f"noise_p{pct}".replace(".", "_")] = p.noise.get(pct)
+                    row[f"snr_p{pct}".replace(".", "_")] = p.snr.get(pct)
+                w.writerow(row)
+
+
 if __name__ == "__main__":
+    from pathlib import Path
     from concurrent.futures import ProcessPoolExecutor, as_completed
     t0 = time.time()
 
@@ -67,3 +87,9 @@ if __name__ == "__main__":
     print()
     print("If 'wider windows fix P99.9': long_tail noise(P99.9) should drop like SPHERICAL_COW.")
     print("If mix-shift dominated: the ratio column stays large or grows across window sizes.")
+
+    out_dir = Path(__file__).parent / "output"
+    out_dir.mkdir(exist_ok=True)
+    csv_path = out_dir / "noise_vs_window.csv"
+    _write_csv(results, csv_path)
+    print(f"\nResults saved to {csv_path}")
