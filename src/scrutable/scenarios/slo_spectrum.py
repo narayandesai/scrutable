@@ -1,12 +1,12 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
-import numpy as np
+from dataclasses import dataclass
 from scrutable.plant import PlantConfig, Plant
 from scrutable.models import Disturbance, DisturbanceScope
 from scrutable.disturbance import TimedDisturbance
 from scrutable.engine import SimulationEngine
 from scrutable.profiles import PlantProfile, build_workload_mix
 from scrutable.detectors.slo import LatencySloCalibrator, LatencySloSensor, LatencySloDetector, SloTarget
+from scrutable.window_result import WindowResult
 
 
 @dataclass
@@ -41,19 +41,17 @@ def _make_plant() -> Plant:
     ))
 
 
-def _compute_window(responses, t_start: float, t_end: float) -> TimeWindow | None:
-    # responses are already arrival-windowed by the buffer; no issued_at re-filter needed
-    latencies = np.array([r.latency for r in responses])
-    if len(latencies) < 10:
+def _compute_window(w: WindowResult, t_start: float, t_end: float) -> TimeWindow | None:
+    if len(w) < 10:
         return None
     return TimeWindow(
         t_start=t_start,
         t_end=t_end,
-        p50=float(np.percentile(latencies, 50)),
-        p90=float(np.percentile(latencies, 90)),
-        p99=float(np.percentile(latencies, 99)),
-        p999=float(np.percentile(latencies, 99.9)),
-        count=len(latencies),
+        p50=w.percentile(50),
+        p90=w.percentile(90),
+        p99=w.percentile(99),
+        p999=w.percentile(99.9),
+        count=len(w),
     )
 
 
@@ -86,7 +84,7 @@ def run_slo_scenario(
     engine.run(total_duration)
 
     buf = engine.buffer
-    calibrator = LatencySloCalibrator(multiplier=2.0)
+    calibrator = LatencySloCalibrator()
     target = calibrator.calibrate(buf, calibration_end=calibration_duration, percentile=99.9, window_size=window_size)
 
     sensor_calibrated = LatencySloSensor(

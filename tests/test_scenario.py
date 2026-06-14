@@ -37,11 +37,11 @@ def test_engine_produces_responses(tiny_infra):
 def test_engine_responses_have_valid_fields(tiny_infra):
     engine = _make_engine(tiny_infra)
     engine.run(1.0)
-    for resp in engine.buffer.window(0.0, 2.0):
-        assert resp.workload_id == "wl1"
-        assert resp.latency >= 0.0
-        assert resp.error_code in (0, 1, 503)
-        assert resp.node_id != "" or resp.error_code == 503
+    w = engine.buffer.window(0.0, 2.0)
+    assert len(w) > 0
+    # WindowResult exposes aggregate latency and error_rate
+    assert w.percentile(50) >= 0.0
+    assert 0.0 <= w.error_rate <= 1.0
 
 
 def test_engine_reproducible_with_same_seed(tiny_infra):
@@ -65,9 +65,10 @@ def test_engine_reproducible_with_same_seed(tiny_infra):
     r1 = e1.buffer.window(0.0, 3.0)
     r2 = e2.buffer.window(0.0, 3.0)
     assert len(r1) == len(r2)
-    for a, b in zip(r1, r2):
-        assert a.request_id == b.request_id
-        assert a.latency == b.latency
+    # With the new WindowResult API, verify aggregate reproducibility
+    assert r1.percentile(50) == r2.percentile(50)
+    assert r1.percentile(99) == r2.percentile(99)
+    assert r1.error_rate == r2.error_rate
 
 
 def test_timed_disturbance_elevates_latency(tiny_infra):
@@ -81,8 +82,8 @@ def test_timed_disturbance_elevates_latency(tiny_infra):
     engine.run(10.0)
     before = engine.buffer.window(0.0, 5.0)
     after = engine.buffer.window(5.0, 10.0)
-    avg_before = sum(r.latency for r in before) / len(before)
-    avg_after = sum(r.latency for r in after) / len(after)
+    avg_before = before.percentile(50)
+    avg_after = after.percentile(50)
     assert avg_after > avg_before * 3
 
 
@@ -102,14 +103,12 @@ class AlwaysFiresSensor:
     def measure(self, window):
         if not window:
             return []
-        t_start = min(r.issued_at for r in window)
-        t_end = max(r.issued_at + r.latency for r in window)
         return [Signal(
             sensor_id=self.sensor_id,
             metric="always",
             value=1.0,
-            window_start=t_start,
-            window_end=t_end,
+            window_start=window.t_start,
+            window_end=window.t_end,
             sample_count=len(window),
         )]
 

@@ -47,13 +47,8 @@ def _run_chunk(
     disturbance_at: float,
     disturbance_addend: float,
     disturbance_coverage: float,
-) -> list:
-    """Simulate one workload chunk; return raw Response list for merging.
-
-    If the chunk's shares sum to < 1 (i.e. it's a slice of a larger profile),
-    shares are normalized and total_rate scaled proportionally so each
-    workload's per-request arrival rate is preserved.
-    """
+) -> "NumpyObservationBuffer":
+    """Simulate one workload chunk; return buffer for merging."""
     total_share = sum(e.share for e in profile.entries)
     if abs(total_share - 1.0) > 1e-9:
         normalized = [
@@ -73,10 +68,10 @@ def _run_chunk(
     )
     engine.add_timed_disturbance(TimedDisturbance(disturbance=disturbance, inject_at=disturbance_at))
     engine.run(total_duration)
-    return list(engine.buffer._responses)
+    return engine.buffer
 
 
-def _run_chunk_kwargs(kwargs: dict) -> list:
+def _run_chunk_kwargs(kwargs: dict) -> "NumpyObservationBuffer":
     return _run_chunk(**kwargs)
 
 
@@ -91,7 +86,7 @@ def _run_chunk_by_index(
     disturbance_at: float,
     disturbance_addend: float,
     disturbance_coverage: float,
-) -> list:
+) -> "NumpyObservationBuffer":
     """Reconstruct profile slice inside the worker to avoid pickling large profiles."""
     from scrutable.profiles import SPHERICAL_COW, make_long_tail, split_profile
     if profile_factory == "spherical_cow":
@@ -112,8 +107,25 @@ def _run_chunk_by_index(
     )
 
 
-def _run_chunk_by_index_kwargs(kwargs: dict) -> list:
+def _run_chunk_by_index_kwargs(kwargs: dict) -> "NumpyObservationBuffer":
     return _run_chunk_by_index(**kwargs)
+
+
+def _run_chunk_by_index_histogram_kwargs(kwargs: dict) -> "HistogramBuffer":
+    from scrutable.histogram_buffer import HistogramBuffer
+    h_keys = {'histogram_percentiles', 'histogram_dt',
+               'histogram_latency_lo', 'histogram_latency_hi', 'histogram_n_bins'}
+    sim_kwargs = {k: v for k, v in kwargs.items() if k not in h_keys}
+    nbuf = _run_chunk_by_index(**sim_kwargs)
+    return HistogramBuffer.from_numpy_buffer(
+        nbuf,
+        total_duration=kwargs['total_duration'],
+        percentiles=kwargs['histogram_percentiles'],
+        dt=kwargs.get('histogram_dt', 1.0),
+        latency_lo=kwargs.get('histogram_latency_lo', 1e-3),
+        latency_hi=kwargs.get('histogram_latency_hi', 10.0),
+        n_bins=kwargs.get('histogram_n_bins', 200),
+    )
 
 
 def _run_profile_parallel(
@@ -131,7 +143,7 @@ def _run_profile_parallel(
 ) -> list[PerformancePoint]:
     """Simulate one profile across N worker processes, merge, then analyze."""
     from scrutable.profiles import split_profile
-    from scrutable.observations import ObservationBuffer, merge_observation_buffers
+    from scrutable.observations import NumpyObservationBuffer, merge_observation_buffers
 
     disturbance_at = max(window_sizes) * n_calibration_windows
     total_duration = disturbance_at + post_disturbance
@@ -151,10 +163,9 @@ def _run_profile_parallel(
     ]
 
     with ProcessPoolExecutor(max_workers=simulation_workers) as pool:
-        chunk_responses = list(pool.map(_run_chunk_kwargs, chunk_kwargs))
+        chunk_bufs = list(pool.map(_run_chunk_kwargs, chunk_kwargs))
 
-    all_responses = [r for responses in chunk_responses for r in responses]
-    buf = ObservationBuffer.from_responses(all_responses)
+    buf = merge_observation_buffers(chunk_bufs)
 
     sigma = profile.entries[0].spec.latency_sigma
     return [
@@ -198,15 +209,14 @@ def _analyze_buffer(
 
     t = 0.0
     while t + window_size <= total_duration:
-        responses = buf.window(t, t + window_size)
-        if responses:
-            signals = sensor.measure(responses)
+        window = buf.window(t, t + window_size)
+        if window:
+            signals = sensor.measure(window)
             fired = bool(detector.detect(signals))
             is_disturbance = t >= disturbance_at
-            latencies = np.array([r.latency for r in responses])
             bucket = post_pct if is_disturbance else burnin_pct
             for p in _SNR_PERCENTILES:
-                bucket[p].append(float(np.percentile(latencies, p)))
+                bucket[p].append(window.percentile(p))
             if is_disturbance:
                 if fired:
                     tp += 1
