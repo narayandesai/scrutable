@@ -136,4 +136,5 @@ def merge_histogram_buffers(buffers: list[HistogramBuffer]) -> HistogramBuffer:
         result._counts += b._counts
         result._errors += b._errors
         result._total  += b._total
+    result._expire_lo = max(b._expire_lo for b in buffers)
     return result
