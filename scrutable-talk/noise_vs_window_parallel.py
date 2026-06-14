@@ -10,6 +10,14 @@ over pipes, which was serializing worker startup.
 Layout:
   SPHERICAL_COW  → 1 chunk  (worker 0)
   long_tail      → 14 chunks (workers 1-14)
+
+RAM note: workers return HistogramBuffer (~2.9 MB each) over IPC rather than
+raw response lists. The lead process never accumulates per-response data.
+
+Usage (from repo root):
+  uv run python scrutable-talk/noise_vs_window_parallel.py
+
+Results are printed to stdout and saved to scrutable-talk/output/noise_vs_window_parallel.csv.
 """
 from __future__ import annotations
 import time
