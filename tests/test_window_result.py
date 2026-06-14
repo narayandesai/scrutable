@@ -11,7 +11,7 @@ def _exact(latencies, error_rate=0.0, t_start=0.0, t_end=1.0):
     )
 
 
-def _precomputed(d, count=100):
+def _make_precomputed(d, count=100):
     return WindowResult(t_start=0.0, t_end=1.0, count=count, error_rate=0.0,
                         _precomputed=d)
 
@@ -22,12 +22,12 @@ def test_percentile_exact_delegates_to_numpy():
 
 
 def test_percentile_precomputed_lookup():
-    assert _precomputed({99.9: 0.42}).percentile(99.9) == pytest.approx(0.42)
+    assert _make_precomputed({99.9: 0.42}).percentile(99.9) == pytest.approx(0.42)
 
 
 def test_percentile_keyerror_for_undeclared():
     with pytest.raises(KeyError):
-        _precomputed({99.0: 0.3}).percentile(99.9)
+        _make_precomputed({99.0: 0.3}).percentile(99.9)
 
 
 def test_len():
@@ -40,6 +40,13 @@ def test_bool_true_when_nonempty():
 
 def test_bool_false_when_empty():
     assert not bool(WindowResult(t_start=0.0, t_end=1.0, count=0, error_rate=0.0))
+
+
+def test_percentile_empty_latencies_returns_zero():
+    wr = WindowResult(t_start=0.0, t_end=1.0, count=0, error_rate=0.0,
+                      _latencies=np.array([], dtype=np.float64))
+    assert wr.percentile(50) == 0.0
+    assert wr.percentile(99.9) == 0.0
 
 
 def test_error_rate_stored():
