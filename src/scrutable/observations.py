@@ -24,6 +24,7 @@ class NumpyObservationBuffer(ObservationBuffer):
         self._issued_at:   np.ndarray = np.empty(0, dtype=np.float64)
         self._error_codes: np.ndarray = np.empty(0, dtype=np.int32)
         self._arrays_valid: bool = True  # empty arrays are already sorted
+        self._low_water_mark: float = 0.0
 
     def append(self, response: Response) -> None:
         arrival = response.issued_at + response.latency
@@ -35,11 +36,15 @@ class NumpyObservationBuffer(ObservationBuffer):
     def _materialize(self) -> None:
         if self._arrays_valid:
             return
-        if not self._pending:
+        # drop anything that was already expired
+        pending = [(a, lat, iss, err) for a, lat, iss, err in self._pending
+                   if a >= self._low_water_mark]
+        if not pending:
+            self._pending = []
             self._arrays_valid = True
             return
-        self._pending.sort(key=lambda t: t[0])
-        new = np.array(self._pending, dtype=np.float64)
+        pending.sort(key=lambda t: t[0])
+        new = np.array(pending, dtype=np.float64)
         new_arrivals    = new[:, 0]
         new_latencies   = new[:, 1]
         new_issued_at   = new[:, 2]
@@ -83,12 +88,12 @@ class NumpyObservationBuffer(ObservationBuffer):
     def expire(self, before: float) -> None:
         self._materialize()
         idx = int(np.searchsorted(self._arrivals, before, side='left'))
-        if idx == 0:
-            return
-        self._arrivals    = self._arrivals[idx:]
-        self._latencies   = self._latencies[idx:]
-        self._issued_at   = self._issued_at[idx:]
-        self._error_codes = self._error_codes[idx:]
+        if idx > 0:
+            self._arrivals    = self._arrivals[idx:]
+            self._latencies   = self._latencies[idx:]
+            self._issued_at   = self._issued_at[idx:]
+            self._error_codes = self._error_codes[idx:]
+        self._low_water_mark = max(self._low_water_mark, before)
 
     @classmethod
     def from_responses(cls, responses: list[Response]) -> "NumpyObservationBuffer":

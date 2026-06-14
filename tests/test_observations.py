@@ -100,3 +100,32 @@ def test_merge_observation_buffers(build_response):
     merged = merge_observation_buffers([buf1, buf2])
     assert len(merged.window(0.0, 4.0)) == 4
     assert len(merged.window(1.0, 2.0)) == 1   # only arrival at 1.5
+
+
+def test_expire_boundary_preserves_response_at_exact_cutoff(build_response):
+    buf = NumpyObservationBuffer()
+    buf.append(build_response(issued_at=4.0, latency=1.0))  # arrives 5.0
+    buf.expire(before=5.0)
+    # arrives exactly at 5.0 — expire(before=5.0) uses side='left', so 5.0 is kept
+    assert len(buf.window(4.0, 6.0)) == 1
+
+
+def test_expire_then_append_does_not_resurrect_old_data(build_response):
+    buf = NumpyObservationBuffer()
+    buf.append(build_response(issued_at=0.0, latency=1.0))  # arrives 1.0
+    buf.expire(before=3.0)
+    # append something that would arrive before the low-water mark
+    buf.append(build_response(issued_at=0.5, latency=1.0))  # arrives 1.5 — below mark
+    buf.append(build_response(issued_at=5.0, latency=1.0))  # arrives 6.0 — above mark
+    assert not buf.window(0.0, 2.5)   # 1.0 and 1.5 should both be absent
+    assert len(buf.window(5.0, 7.0)) == 1
+
+
+def test_merge_observation_buffers_empty_list():
+    merged = merge_observation_buffers([])
+    assert not merged.window(0.0, 10.0)
+
+
+def test_from_responses_empty():
+    buf = NumpyObservationBuffer.from_responses([])
+    assert not buf.window(0.0, 10.0)
