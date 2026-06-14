@@ -15,8 +15,8 @@ from __future__ import annotations
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from scrutable.profiles import SPHERICAL_COW, make_long_tail, split_profile
-from scrutable.scenarios.slo_performance import _run_chunk_by_index_kwargs, _analyze_buffer
-from scrutable.observations import ObservationBuffer
+from scrutable.scenarios.slo_performance import _run_chunk_by_index_histogram_kwargs, _analyze_buffer
+from scrutable.histogram_buffer import merge_histogram_buffers
 
 WINDOW_SIZES  = [1.0, 5.0, 30.0, 60.0, 120.0]
 N_CAL_WINDOWS = 30
@@ -25,6 +25,7 @@ DIST_ADDEND   = 0.3
 DIST_COVERAGE = 0.5
 TARGET_FPR    = 0.001
 PERCENTILE    = 99.9
+PERCENTILES = (50.0, 75.0, 90.0, 99.0, 99.9)
 SEED          = 42
 PROFILE_SEED  = 42  # seed for make_long_tail RNG
 
@@ -67,23 +68,25 @@ if __name__ == "__main__":
         profile_factory="spherical_cow", chunk_index=0, n_chunks=1,
         profile_seed=PROFILE_SEED, sim_seed=SEED,
         **{**COMMON, "total_rate": 10_000.0},
+        histogram_percentiles=PERCENTILES,
     )]
     lt_jobs = [dict(
         profile_factory="long_tail", chunk_index=i, n_chunks=14,
         profile_seed=PROFILE_SEED, sim_seed=SEED + i,
         **{**COMMON, "total_rate": 100_000.0},
+        histogram_percentiles=PERCENTILES,
     ) for i in range(14)]
 
     all_jobs = [("spherical_cow", kw) for kw in sc_jobs] + \
                [("long_tail",     kw) for kw in lt_jobs]
 
-    chunk_responses: dict[str, list] = {"spherical_cow": [], "long_tail": []}
+    chunk_buffers: dict[str, list] = {"spherical_cow": [], "long_tail": []}
 
     with ProcessPoolExecutor(max_workers=4) as pool:
-        futures = {pool.submit(_run_chunk_by_index_kwargs, kw): name for name, kw in all_jobs}
+        futures = {pool.submit(_run_chunk_by_index_histogram_kwargs, kw): name for name, kw in all_jobs}
         for fut in as_completed(futures):
             name = futures[fut]
-            chunk_responses[name].extend(fut.result())
+            chunk_buffers[name].append(fut.result())
             print(f"  chunk done for {name} ({time.time()-t0:.1f}s)", flush=True)
 
     print(f"\nAll chunks done in {time.time()-t0:.1f}s — merging and analyzing...", flush=True)
@@ -94,7 +97,8 @@ if __name__ == "__main__":
     }
     results: dict[str, dict] = {}
     for name, profile in profiles_meta.items():
-        buf = ObservationBuffer.from_responses(chunk_responses[name])
+        # pop frees the chunk buffers once merged; one profile in memory at a time.
+        buf = merge_histogram_buffers(chunk_buffers.pop(name))
         sigma = profile.entries[0].spec.latency_sigma
         pts = [
             _analyze_buffer(
