@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     chunk_buffers: dict[str, list] = {"spherical_cow": [], "long_tail": []}
 
-    with ProcessPoolExecutor(max_workers=4) as pool:
+    with ProcessPoolExecutor(max_workers=8) as pool:
         futures = {pool.submit(_run_chunk_by_index_histogram_kwargs, kw): name for name, kw in all_jobs}
         for fut in as_completed(futures):
             name = futures[fut]
