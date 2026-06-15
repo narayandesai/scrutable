@@ -47,6 +47,7 @@ def _run_chunk(
     disturbance_at: float,
     disturbance_addend: float,
     disturbance_coverage: float,
+    disturbance_duration: float | None = None,
 ) -> "NumpyObservationBuffer":
     """Simulate one workload chunk; return buffer for merging."""
     total_share = sum(e.share for e in profile.entries)
@@ -66,7 +67,8 @@ def _run_chunk(
         scope=DisturbanceScope(target_type="node", filter_id=None, percentage=disturbance_coverage),
         node_effects={"latency_addend": disturbance_addend},
     )
-    engine.add_timed_disturbance(TimedDisturbance(disturbance=disturbance, inject_at=disturbance_at))
+    remove_at = disturbance_at + disturbance_duration if disturbance_duration is not None else None
+    engine.add_timed_disturbance(TimedDisturbance(disturbance=disturbance, inject_at=disturbance_at, remove_at=remove_at))
     engine.run(total_duration)
     return engine.buffer
 
@@ -86,6 +88,7 @@ def _run_chunk_by_index(
     disturbance_at: float,
     disturbance_addend: float,
     disturbance_coverage: float,
+    disturbance_duration: float | None = None,
 ) -> "NumpyObservationBuffer":
     """Reconstruct profile slice inside the worker to avoid pickling large profiles."""
     from scrutable.profiles import SPHERICAL_COW, make_long_tail, split_profile
@@ -104,6 +107,7 @@ def _run_chunk_by_index(
         disturbance_at=disturbance_at,
         disturbance_addend=disturbance_addend,
         disturbance_coverage=disturbance_coverage,
+        disturbance_duration=disturbance_duration,
     )
 
 

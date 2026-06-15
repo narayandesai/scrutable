@@ -38,7 +38,7 @@ SEED          = 42
 PROFILE_SEED  = 42  # seed for make_long_tail RNG
 
 DISTURBANCE_AT = max(WINDOW_SIZES) * N_CAL_WINDOWS   # 3600s
-TOTAL_DURATION = DISTURBANCE_AT + POST_DIST
+TOTAL_DURATION = DISTURBANCE_AT + max(WINDOW_SIZES)  # room for the largest window to complete
 
 COMMON = dict(
     total_rate=0,           # overridden per profile
@@ -46,6 +46,7 @@ COMMON = dict(
     disturbance_at=DISTURBANCE_AT,
     disturbance_addend=DIST_ADDEND,
     disturbance_coverage=DIST_COVERAGE,
+    disturbance_duration=POST_DIST,
 )
 
 def _write_csv(results: dict[str, dict], window_sizes: list[float], path: "Path") -> None:
