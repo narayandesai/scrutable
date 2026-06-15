@@ -1,0 +1,33 @@
+❯ uv run python3 scrutable-talk/noise_vs_window_parallel.py
+  chunk done for spherical_cow (856.7s)
+  chunk done for long_tail (1124.9s)
+  chunk done for long_tail (1133.5s)
+  chunk done for long_tail (1138.3s)
+  chunk done for long_tail (1997.5s)
+  chunk done for long_tail (2258.5s)
+  chunk done for long_tail (2272.4s)
+  chunk done for long_tail (2282.0s)
+  chunk done for long_tail (3146.4s)
+  chunk done for long_tail (3415.3s)
+  chunk done for long_tail (3421.5s)
+  chunk done for long_tail (3427.5s)
+  chunk done for long_tail (4235.5s)
+  chunk done for long_tail (4479.4s)
+  chunk done for long_tail (4975.7s)
+
+All chunks done in 4976.5s — merging and analyzing...
+
+Done in 4977.4s
+
+  Window |  SC noise(P99.9) |  SC noise(P50) |  LT noise(P99.9) |  LT noise(P50) |   Noise ratio(P99.9)
+----------------------------------------------------------------------------------------------------
+      1s |          0.0057s |        0.0002s |          3.4626s |        0.0006s |                 613×
+      5s |          0.0096s |        0.0001s |          3.4585s |        0.0005s |                 360×
+     30s |          0.0200s |        0.0001s |          3.5082s |        0.0005s |                 176×
+      1m |             None |           None |             None |           None |                 None
+      2m |             None |           None |             None |           None |                 None
+
+If 'wider windows fix P99.9': LT noise(P99.9) drops like SC noise(P99.9).
+If mix-shift dominated: ratio stays large or grows.
+
+Results saved to /home/nld/dev/scrutable/scrutable-talk/output/noise_vs_window_parallel.csv
