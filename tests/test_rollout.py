@@ -4,6 +4,7 @@ from scrutable.models import (
 )
 from scrutable.rollout import Rollout
 from scrutable.plant import PlantConfig, Plant
+from scrutable.event_loop import EventLoop
 
 
 @pytest.fixture
@@ -224,3 +225,86 @@ def test_check_gates_receives_current_status(two_cluster_plant, latency_release)
     rollout._deploy_stage(0, sim_time=1.0)
     rollout._check_gates(1, sim_time=11.0)
     assert seen_stages == [0, 1]
+
+
+def test_begin_rollback_transitions_to_rolling_back(two_cluster_plant, latency_release):
+    loop = EventLoop()
+    rollout = Rollout(latency_release, ["r1c1", "r1c2"], stage_interval=10.0)
+    rollout._activate(two_cluster_plant, {}, loop)
+    rollout._deploy_stage(0, sim_time=1.0)
+    rollout.halt(sim_time=2.0)
+    rollout.begin_rollback(sim_time=2.0, duration=100.0)
+    assert rollout.status.state == RolloutState.ROLLING_BACK
+
+
+def test_begin_rollback_removes_effects_and_transitions_rolled_back(two_cluster_plant, latency_release):
+    loop = EventLoop()
+    rollout = Rollout(latency_release, ["r1c1", "r1c2"], stage_interval=10.0)
+    rollout._activate(two_cluster_plant, {}, loop)
+    rollout._deploy_stage(0, sim_time=1.0)
+    rollout.halt(sim_time=2.0)
+    rollout.begin_rollback(sim_time=2.0, duration=100.0)
+    loop.run(until=200.0)
+    assert rollout.status.state == RolloutState.ROLLED_BACK
+    for node in two_cluster_plant.all_nodes():
+        assert node.latency_addend == pytest.approx(0.0)
+
+
+def test_begin_rollback_noop_when_not_halted(two_cluster_plant, latency_release):
+    loop = EventLoop()
+    rollout = Rollout(latency_release, ["r1c1", "r1c2"], stage_interval=10.0)
+    rollout._activate(two_cluster_plant, {}, loop)
+    rollout._deploy_stage(0, sim_time=1.0)  # IN_PROGRESS, not HALTED
+    rollout.begin_rollback(sim_time=1.0, duration=100.0)
+    assert rollout.status.state == RolloutState.IN_PROGRESS
+
+
+def test_on_complete_fires_on_completed(two_cluster_plant, latency_release):
+    fired = []
+    rollout = Rollout(
+        latency_release, ["r1c1"], stage_interval=10.0,
+        on_complete=lambda state, t: fired.append((state, t)),
+    )
+    rollout._activate(two_cluster_plant, {})
+    rollout._deploy_stage(0, sim_time=5.0)
+    assert len(fired) == 1
+    assert fired[0][0] == RolloutState.COMPLETED
+    assert fired[0][1] == pytest.approx(5.0)
+
+
+def test_on_complete_fires_on_rolled_back_via_rollback_all(two_cluster_plant, latency_release):
+    fired = []
+    rollout = Rollout(
+        latency_release, ["r1c1", "r1c2"], stage_interval=10.0,
+        on_complete=lambda state, t: fired.append((state, t)),
+    )
+    rollout._activate(two_cluster_plant, {})
+    rollout._deploy_stage(0, sim_time=1.0)
+    rollout.halt(sim_time=2.0)
+    rollout.rollback_all(sim_time=3.0)
+    assert len(fired) == 1
+    assert fired[0][0] == RolloutState.ROLLED_BACK
+    assert fired[0][1] == pytest.approx(3.0)
+
+
+def test_on_complete_fires_on_rolled_back_via_begin_rollback(two_cluster_plant, latency_release):
+    fired = []
+    loop = EventLoop()
+    rollout = Rollout(
+        latency_release, ["r1c1", "r1c2"], stage_interval=10.0,
+        on_complete=lambda state, t: fired.append((state, t)),
+    )
+    rollout._activate(two_cluster_plant, {}, loop)
+    rollout._deploy_stage(0, sim_time=1.0)
+    rollout.halt(sim_time=2.0)
+    rollout.begin_rollback(sim_time=2.0, duration=100.0)
+    loop.run(until=200.0)
+    assert len(fired) == 1
+    assert fired[0][0] == RolloutState.ROLLED_BACK
+    assert fired[0][1] == pytest.approx(102.0)
+
+
+def test_release_property_returns_release(two_cluster_plant, latency_release):
+    rollout = Rollout(latency_release, ["r1c1"], stage_interval=10.0)
+    rollout._activate(two_cluster_plant, {})
+    assert rollout.release is latency_release

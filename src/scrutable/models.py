@@ -98,6 +98,7 @@ class RolloutState(enum.Enum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     HALTED = "halted"
+    ROLLING_BACK = "rolling_back"
     COMPLETED = "completed"
     ROLLED_BACK = "rolled_back"
 
