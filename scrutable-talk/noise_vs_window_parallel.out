@@ -1,22 +1,26 @@
-  chunk done for spherical_cow (1001.2s)
-  chunk done for long_tail (1386.6s)
-  chunk done for long_tail (1413.9s)
-  chunk done for long_tail (1417.5s)
-  chunk done for long_tail (1430.2s)
-  chunk done for long_tail (1434.3s)
-  chunk done for long_tail (1440.5s)
-  chunk done for long_tail (1442.8s)
-  chunk done for long_tail (2327.2s)
-  chunk done for long_tail (2675.7s)
-  chunk done for long_tail (2702.3s)
-  chunk done for long_tail (2710.0s)
-  chunk done for long_tail (2713.6s)
-  chunk done for long_tail (2715.0s)
-  chunk done for long_tail (3210.1s)
+   Building scrutable @ file:///home/nld/dev/scrutable
+      Built scrutable @ file:///home/nld/dev/scrutable
+Uninstalled 1 package in 1ms
+Installed 1 package in 210ms
+  chunk done for spherical_cow (972.9s)
+  chunk done for long_tail (1374.0s)
+  chunk done for long_tail (1381.6s)
+  chunk done for long_tail (1401.9s)
+  chunk done for long_tail (1408.7s)
+  chunk done for long_tail (1409.3s)
+  chunk done for long_tail (1411.7s)
+  chunk done for long_tail (1435.2s)
+  chunk done for long_tail (2296.0s)
+  chunk done for long_tail (2639.2s)
+  chunk done for long_tail (2642.0s)
+  chunk done for long_tail (2672.4s)
+  chunk done for long_tail (2674.1s)
+  chunk done for long_tail (2679.1s)
+  chunk done for long_tail (3168.0s)
 
-All chunks done in 3211.1s — merging and analyzing...
+All chunks done in 3169.0s — merging and analyzing...
 
-Done in 3212.2s
+Done in 3169.9s
 
   Window |  SC noise(P99.9) |  SC noise(P50) |  LT noise(P99.9) |  LT noise(P50) |   Noise ratio(P99.9)
 ----------------------------------------------------------------------------------------------------
