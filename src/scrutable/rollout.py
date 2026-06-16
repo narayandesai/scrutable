@@ -149,10 +149,11 @@ class Rollout:
     def begin_rollback(self, sim_time: float, duration: float) -> None:
         if self._state != RolloutState.HALTED:
             return
-        assert self._loop is not None, "begin_rollback requires a loop; pass loop to _activate"
+        if self._loop is None:
+            raise RuntimeError("begin_rollback requires a loop; pass loop to _activate")
         self._transition(RolloutState.ROLLING_BACK, sim_time)
         finish_at = sim_time + duration
-        self._loop.schedule(finish_at, lambda t=finish_at: self._finish_rollback(t))
+        self._loop.schedule(finish_at, lambda: self._finish_rollback(self._loop.now))
 
     def _finish_rollback(self, sim_time: float) -> None:
         for cluster_id in list(self._deployed_clusters):
