@@ -15,23 +15,28 @@ P99.9 post-disturbance vs. baseline.
 
 ### Recall and FPR
 
-| Window | SC recall | SC FPR | LT recall | LT FPR |
-|--------|-----------|--------|-----------|--------|
-| 1s     | 0.28      |  5.0%  | 1.00      | 91.2%  |
-| 5s     | 0.29      |  1.25% | 1.00      | 93.1%  |
-| 30s    | 0.50      |  5.0%  | 1.00      | 75.8%  |
-| 60s    | 0.50      |  3.3%  | 1.00      | 51.7%  |
-| 120s   | 1.00      |  3.3%  | 1.00      |  3.3%  |
+| Window | SC recall | SC FPR | LT recall | LT FPR       |
+|--------|-----------|--------|-----------|--------------|
+| 1s     | 1.00      |  5.0%  | 1.00      | 91.2%        |
+| 5s     | 1.00      |  1.25% | 1.00      | 93.1%        |
+| 30s    | 1.00      |  5.0%  | 1.00      | 75.8%        |
+| 60s    | 1.00      |  3.3%  | 1.00      | 51.7%        |
+| 120s   | 1.00      |  3.3%  | 1.00      | 3.3% (†)     |
 
-SC recall is non-monotonic: lowest at small windows (0.28-0.29), recovering to 1.0 at
-120s. This reflects the time-limited fault — the disturbance lasts exactly POST_DIST
-seconds, and with small windows the calibrated threshold overshoots the shorter fault
-signal. SC SNR(P99.9) is consistently > 1 (5–13×), so the fault is detectable in
-principle; the recall gap is a calibration sensitivity effect, not a structural floor.
+SC recall is 1.00 across all window sizes — the fault signal exceeds the calibrated
+threshold in every window that contains the active disturbance.
 
-LT recall is 1.00 at every window size. This is surprising given LT SNR(P99.9) < 1 —
-the LT detector fires because of its catastrophically high FPR (51–93%), not because it
-is genuinely detecting the fault.
+LT recall is 1.00 at every window because the detector fires on nearly everything.
+For 1s–60s windows, LT FPR (51–93%) is so high that clean burn-in windows trigger
+the alarm constantly. "Recall = 1.00" reflects the detector never being off, not
+genuine detection.
+
+**†** The 120s case is degenerate. `N_CAL_WINDOWS = 30` burn-in windows of 120s spans
+exactly 3600s — the full burn-in period. Calibration and FPR evaluation are performed
+on the same 30 windows, so FPR = 1/30 ≈ 3.3% is a tautology from `np.percentile`.
+There is also only one disturbance window (the 120s window starting at `disturbance_at`),
+so LT recall is a single-trial coin flip. Neither number is meaningful at this window
+size without a longer burn-in.
 
 ### P99.9 Noise Floor and SNR
 
