@@ -4,12 +4,23 @@ from typing import Callable
 from scrutable.event_loop import EventLoop
 from scrutable.models import (
     Release, ReleaseChange, ReleaseStatus, RolloutState, RolloutStateTransition,
-    WorkloadState, Disturbance, DisturbanceScope,
+    WorkloadState, Disturbance, DisturbanceScope, Alarm,
 )
 from scrutable.plant import Plant
 from scrutable.disturbance import apply_disturbance, remove_disturbance
 
 GateCallback = Callable[["ReleaseStatus", float], bool]
+
+
+class AlarmLog:
+    def __init__(self) -> None:
+        self._entries: list[tuple[float, Alarm]] = []
+
+    def record(self, alarm: Alarm, sim_time: float) -> None:
+        self._entries.append((sim_time, alarm))
+
+    def any_since(self, t: float) -> bool:
+        return any(ts >= t for ts, _ in self._entries)
 
 
 class Rollout:
