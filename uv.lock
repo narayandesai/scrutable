@@ -487,6 +487,11 @@ dev = [
     { name = "pytest-cov" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "kaleido", marker = "extra == 'demo'", specifier = ">=0.2" },
@@ -497,6 +502,9 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.17.1" },
 ]
 provides-extras = ["dev", "demo"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.0.3" }]
 
 [[package]]
 name = "simplejson"

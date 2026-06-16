@@ -232,73 +232,65 @@ $$\text{SNR}(p) = \frac{\text{signal}(p)}{\text{noise}(p)} = \frac{\text{percent
 
 ## P99.9 noise floor is window-size invariant for high-variance services
 
-<svg viewBox="0 0 680 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:680px;display:block;margin:0.3em auto 0">
-  <defs><style>
-    .wl  { font: bold 14px 'Helvetica Neue',sans-serif; fill: #1a1a2e; }
-    .scv { font: 11px 'Helvetica Neue',sans-serif; fill: #2a5db0; }
-    .ltv { font: bold 11px 'Helvetica Neue',sans-serif; fill: #fff; }
-    .snr { font: bold 13px 'Helvetica Neue',sans-serif; fill: #e84040; }
-    .ax  { font: 11px 'Helvetica Neue',sans-serif; fill: #999; }
-    .leg { font: 12px 'Helvetica Neue',sans-serif; fill: #444; }
-  </style></defs>
-
-  <!-- Legend -->
-  <rect x="150" y="2"  width="12" height="12" fill="#2a5db0" rx="2"/>
-  <text x="166" y="13" class="leg">spherical_cow</text>
-  <rect x="295" y="2"  width="12" height="12" fill="#e84040" rx="2"/>
-  <text x="311" y="13" class="leg">long_tail</text>
-  <text x="510" y="13" class="leg" font-weight="bold" fill="#e84040">SNR(P99.9)</text>
-
-  <!-- Bar area: x=68 to x=638 = 570px; max=3.53s → 161.5px/s -->
-
-  <!-- 1s -->
-  <text x="62" y="44"  text-anchor="end" class="wl">1s</text>
-  <rect x="68" y="24"  width="3"   height="14" fill="#2a5db0" rx="1"/>
-  <text x="73" y="35"  class="scv">0.006s</text>
-  <rect x="68" y="42"  width="559" height="18" fill="#e84040" rx="2"/>
-  <text x="78" y="56"  class="ltv">3.46s</text>
-  <text x="638" y="56" text-anchor="end" class="snr">0.48</text>
-
-  <!-- 5s -->
-  <text x="62" y="94"  text-anchor="end" class="wl">5s</text>
-  <rect x="68" y="74"  width="4"   height="14" fill="#2a5db0" rx="1"/>
-  <text x="74" y="85"  class="scv">0.010s</text>
-  <rect x="68" y="92"  width="559" height="18" fill="#e84040" rx="2"/>
-  <text x="78" y="106" class="ltv">3.46s</text>
-  <text x="638" y="106" text-anchor="end" class="snr">0.48</text>
-
-  <!-- 30s -->
-  <text x="62" y="144" text-anchor="end" class="wl">30s</text>
-  <rect x="68" y="124" width="6"   height="14" fill="#2a5db0" rx="1"/>
-  <text x="76" y="135" class="scv">0.020s</text>
-  <rect x="68" y="142" width="566" height="18" fill="#e84040" rx="2"/>
-  <text x="78" y="156" class="ltv">3.51s</text>
-  <text x="638" y="156" text-anchor="end" class="snr">0.48</text>
-
-  <!-- 60s -->
-  <text x="62" y="194" text-anchor="end" class="wl">60s</text>
-  <rect x="68" y="174" width="7"   height="14" fill="#2a5db0" rx="1"/>
-  <text x="77" y="185" class="scv">0.027s</text>
-  <rect x="68" y="192" width="569" height="18" fill="#e84040" rx="2"/>
-  <text x="78" y="206" class="ltv">3.53s</text>
-  <text x="638" y="206" text-anchor="end" class="snr">0.48</text>
-
-  <!-- 2m -->
-  <text x="62" y="244" text-anchor="end" class="wl">2m</text>
-  <rect x="68" y="224" width="9"   height="14" fill="#2a5db0" rx="1"/>
-  <text x="79" y="235" class="scv">0.035s</text>
-  <rect x="68" y="242" width="554" height="18" fill="#e84040" rx="2"/>
-  <text x="78" y="256" class="ltv">3.43s</text>
-  <text x="638" y="256" text-anchor="end" class="snr">0.45</text>
-
-  <!-- Axis -->
-  <line x1="68" y1="262" x2="638" y2="262" stroke="#ddd" stroke-width="1"/>
-  <text x="68"  y="270" text-anchor="middle" class="ax">0</text>
-  <text x="230" y="270" text-anchor="middle" class="ax">1s</text>
-  <text x="392" y="270" text-anchor="middle" class="ax">2s</text>
-  <text x="554" y="270" text-anchor="middle" class="ax">3s</text>
-  <text x="638" y="270" text-anchor="middle" class="ax">3.5s</text>
-</svg>
+<div style="font-size:0.78em;font-family:'Helvetica Neue',Arial,sans-serif;max-width:680px;margin:0.3em auto">
+  <div style="display:flex;gap:1.5em;margin-bottom:0.5em;padding-left:3em">
+    <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:12px;height:12px;background:#2a5db0;border-radius:2px;flex-shrink:0"></span>spherical_cow</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:12px;height:12px;background:#e84040;border-radius:2px;flex-shrink:0"></span>long_tail</span>
+    <span style="margin-left:auto;font-weight:bold;color:#e84040">SNR(P99.9)</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">1s</span>
+    <div style="flex:1">
+      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:3px;width:0.17%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.006s</span></div>
+      <div style="height:20px"><div style="width:98.6%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.46s</span></div></div>
+    </div>
+    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.48</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">5s</span>
+    <div style="flex:1">
+      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:4px;width:0.29%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.010s</span></div>
+      <div style="height:20px"><div style="width:98.6%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.46s</span></div></div>
+    </div>
+    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.48</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">30s</span>
+    <div style="flex:1">
+      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:6px;width:0.57%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.020s</span></div>
+      <div style="height:20px"><div style="width:100%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.51s</span></div></div>
+    </div>
+    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.48</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">60s</span>
+    <div style="flex:1">
+      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:7px;width:0.77%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.027s</span></div>
+      <div style="height:20px"><div style="width:100%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.53s</span></div></div>
+    </div>
+    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.48</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">2m</span>
+    <div style="flex:1">
+      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:9px;width:1.00%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.035s</span></div>
+      <div style="height:20px"><div style="width:98.0%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.43s</span></div></div>
+    </div>
+    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.45</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <span style="width:2.5em;flex-shrink:0"></span>
+    <div style="flex:1;position:relative;height:16px">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:#ddd"></div>
+      <span style="position:absolute;left:0;transform:translateX(-50%);color:#999;font-size:0.9em">0</span>
+      <span style="position:absolute;left:28.4%;transform:translateX(-50%);color:#999;font-size:0.9em">1s</span>
+      <span style="position:absolute;left:56.8%;transform:translateX(-50%);color:#999;font-size:0.9em">2s</span>
+      <span style="position:absolute;left:85.3%;transform:translateX(-50%);color:#999;font-size:0.9em">3s</span>
+      <span style="position:absolute;right:0;color:#999;font-size:0.9em">3.5s</span>
+    </div>
+    <span style="width:3em;flex-shrink:0"></span>
+  </div>
+</div>
 
 <div class="callout" style="font-size:0.78em;margin-top:0.4em">
 

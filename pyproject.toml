@@ -25,3 +25,8 @@ build-backend = "hatchling.build"
 testpaths = ["tests"]
 addopts = "-m 'not slow'"
 markers = ["slow: simulation-backed integration tests (deselect with -m 'not slow')"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
