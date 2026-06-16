@@ -23,6 +23,7 @@ class SimulationEngine:
         infra: Plant,
         mix: WorkloadMix,
         seed: int | None = None,
+        buffer_max_age: float | None = None,
     ) -> None:
         self._rng = np.random.default_rng(seed)
         self._loop = EventLoop()
@@ -50,6 +51,7 @@ class SimulationEngine:
         self._detectors: list[Detector] = []
         self._actuators: list[Actuator] = []
         self._started: bool = False
+        self._buffer_max_age: float | None = buffer_max_age
 
     def add_sensor(self, sensor: Sensor) -> None:
         if sensor.sampling_period <= 0:
@@ -102,6 +104,8 @@ class SimulationEngine:
                 for alarm in alarms:
                     for act in self._actuators:
                         act.act(alarm, t, self._rollouts, self._ops)
+            if self._buffer_max_age is not None:
+                self._buffer.expire(t - self._buffer_max_age)
             self._schedule_sensor_tick(s, t)
 
         self._loop.schedule(next_tick, tick)

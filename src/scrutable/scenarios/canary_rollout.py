@@ -7,7 +7,13 @@ from scrutable.traffic import WorkloadEntry, WorkloadMix
 from scrutable.models import Disturbance, DisturbanceScope, WorkloadModel
 from scrutable.rollout import AlarmLog
 from scrutable.pipeline import ChangeSource, ReleaseBundler, RemediationCycle, RolloutController
-from scrutable.detectors.slo import LatencySloCalibrator, LatencySloSensor, LatencySloDetector, SloTarget
+from scrutable.detectors.slo import (
+    LatencySloCalibrator,
+    LatencySloSensor,
+    LatencySloDetector,
+    PercentileRecorderSensor,
+    SloTarget,
+)
 
 
 @dataclass
@@ -59,13 +65,16 @@ def run_canary_rollout(
         entries=[WorkloadEntry(model=model, share=1.0)],
     )
 
-    cal_engine = SimulationEngine(infra=plant, mix=mix, seed=seed)
+    # Calibration: record per-window percentile values without accumulating raw obs.
+    # buffer_max_age=window_size keeps the buffer at O(rate × window_size) in memory.
+    cal_engine = SimulationEngine(infra=plant, mix=mix, seed=seed, buffer_max_age=window_size)
+    recorder = PercentileRecorderSensor(percentile=percentile, window_size=window_size)
+    cal_engine.add_sensor(recorder)
     cal_engine.run(calibration_duration)
 
     calibrator = LatencySloCalibrator(target_fpr=target_fpr)
-    target: SloTarget = calibrator.calibrate(
-        buf=cal_engine._buffer,
-        calibration_end=calibration_duration,
+    target: SloTarget = calibrator.calibrate_from_values(
+        values=recorder.recorded_values,
         percentile=percentile,
         window_size=window_size,
     )
@@ -78,7 +87,7 @@ def run_canary_rollout(
             "prod": [f"prod-n{i}" for i in range(16)],
         },
     ))
-    engine = SimulationEngine(infra=plant2, mix=mix, seed=seed + 1)
+    engine = SimulationEngine(infra=plant2, mix=mix, seed=seed + 1, buffer_max_age=window_size)
 
     sensor = LatencySloSensor(
         sensor_id="canary-slo",

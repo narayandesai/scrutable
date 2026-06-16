@@ -13,6 +13,28 @@ class SloTarget:
     window_size: float
 
 
+class PercentileRecorderSensor:
+    """Accumulates per-window percentile values for calibration; emits no signals.
+
+    Add this sensor to a calibration engine.  After the engine run, pass
+    ``recorded_values`` to ``LatencySloCalibrator.calibrate_from_values``.
+    Using this sensor together with ``SimulationEngine(buffer_max_age=window_size)``
+    keeps the observation buffer at O(rate × window_size) rather than O(rate × duration).
+    """
+
+    def __init__(self, percentile: float, window_size: float) -> None:
+        self.sensor_id = "percentile-recorder"
+        self.window_size = window_size
+        self.sampling_period = window_size
+        self._percentile = percentile
+        self.recorded_values: list[float] = []
+
+    def measure(self, window: WindowResult) -> list[Signal]:
+        if window:
+            self.recorded_values.append(window.percentile(self._percentile))
+        return []
+
+
 @dataclass
 class LatencySloCalibrator:
     target_fpr: float = 0.001
@@ -31,12 +53,20 @@ class LatencySloCalibrator:
             if window:
                 estimates.append(window.percentile(percentile))
             t += window_size
-        if len(estimates) < 2:
+        return self.calibrate_from_values(estimates, percentile, window_size)
+
+    def calibrate_from_values(
+        self,
+        values: list[float],
+        percentile: float,
+        window_size: float,
+    ) -> SloTarget:
+        if len(values) < 2:
             raise ValueError(
-                f"Empirical calibration needs ≥2 windows but got {len(estimates)}. "
+                f"Empirical calibration needs ≥2 windows but got {len(values)}. "
                 f"Increase calibration_duration beyond {2 * window_size:.1f}s or reduce window_size."
             )
-        threshold = float(np.percentile(estimates, (1.0 - self.target_fpr) * 100.0))
+        threshold = float(np.percentile(values, (1.0 - self.target_fpr) * 100.0))
         return SloTarget(percentile=percentile, threshold=threshold, window_size=window_size)
 
 
