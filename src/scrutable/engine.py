@@ -106,7 +106,7 @@ class SimulationEngine:
         self._loop.schedule(next_tick, tick)
 
     def add_rollout(self, rollout: Rollout) -> None:
-        rollout._activate(self._infra, self._workload_states)
+        rollout._activate(self._infra, self._workload_states, self._loop)
         self._rollouts.register(rollout)
         self._schedule_rollout_stage(rollout, stage_idx=0, at=rollout.start_at)
 
