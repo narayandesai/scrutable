@@ -3,7 +3,6 @@ import numpy as np
 from collections import deque
 from scrutable.pipeline import ChangeStream, ReleaseBundler, RolloutPipeline
 from scrutable.rollout import AlarmLog
-from scrutable.plant import PlantConfig, Plant
 from scrutable.event_loop import EventLoop
 from scrutable.models import Disturbance, DisturbanceScope, ReleaseChange
 from scrutable.pipeline import DebugCycle
@@ -15,14 +14,6 @@ def _factory(change_id: str) -> Disturbance:
         scope=DisturbanceScope(target_type="node", filter_id=None, percentage=1.0),
         node_effects={"latency_addend": 0.3},
     )
-
-
-def _two_cluster_plant() -> Plant:
-    return Plant(PlantConfig(
-        regions=["r1"],
-        clusters={"r1": ["canary", "prod"]},
-        nodes={"canary": ["canary-n1"], "prod": ["prod-n1"]},
-    ))
 
 
 def test_change_stream_no_bug_when_fraction_zero():
@@ -127,7 +118,6 @@ def test_debug_cycle_has_long_tail():
 
 
 def test_pipeline_starts_rollout_after_bundle_fills():
-    plant = _two_cluster_plant()
     loop = EventLoop()
     rng = np.random.default_rng(42)
     alarm_log = AlarmLog()

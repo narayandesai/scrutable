@@ -116,7 +116,8 @@ class RolloutPipeline:
         change = self._change_stream.generate_change(f"ch{self._change_counter}", self._rng)
         release = self._bundler.add(change)
         if release is not None:
-            if self._active_rollout is None:
+            debug_in_progress = self._rollback_done or self._debug_done
+            if self._active_rollout is None and not debug_in_progress:
                 self._start_rollout(release, sim_time)
             else:
                 self._pending.append(release)
