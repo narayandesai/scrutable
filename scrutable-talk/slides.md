@@ -232,7 +232,7 @@ $$\text{SNR}(p) = \frac{\text{signal}(p)}{\text{noise}(p)} = \frac{\text{percent
 
 ## P99.9 noise floor is window-size invariant for high-variance services
 
-<svg viewBox="0 0 680 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:680px;display:block;margin:0.3em auto 0">
+<svg viewBox="0 0 680 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:680px;display:block;margin:0.3em auto 0">
   <defs><style>
     .wl  { font: bold 14px 'Helvetica Neue',sans-serif; fill: #1a1a2e; }
     .scv { font: 11px 'Helvetica Neue',sans-serif; fill: #2a5db0; }
@@ -249,44 +249,60 @@ $$\text{SNR}(p) = \frac{\text{signal}(p)}{\text{noise}(p)} = \frac{\text{percent
   <text x="311" y="13" class="leg">long_tail</text>
   <text x="510" y="13" class="leg" font-weight="bold" fill="#e84040">SNR(P99.9)</text>
 
-  <!-- Bar area: x=68 to x=638 = 570px; max=3.51s → 162.4px/s -->
+  <!-- Bar area: x=68 to x=638 = 570px; max=3.53s → 161.5px/s -->
 
   <!-- 1s -->
-  <text x="62" y="50"  text-anchor="end" class="wl">1s</text>
-  <rect x="68" y="30"  width="3"   height="16" fill="#2a5db0" rx="1"/>
-  <text x="73" y="42"  class="scv">0.006s</text>
-  <rect x="68" y="50"  width="562" height="22" fill="#e84040" rx="2"/>
-  <text x="78" y="66"  class="ltv">3.46s</text>
-  <text x="638" y="66" text-anchor="end" class="snr">0.48</text>
+  <text x="62" y="44"  text-anchor="end" class="wl">1s</text>
+  <rect x="68" y="24"  width="3"   height="14" fill="#2a5db0" rx="1"/>
+  <text x="73" y="35"  class="scv">0.006s</text>
+  <rect x="68" y="42"  width="559" height="18" fill="#e84040" rx="2"/>
+  <text x="78" y="56"  class="ltv">3.46s</text>
+  <text x="638" y="56" text-anchor="end" class="snr">0.48</text>
 
   <!-- 5s -->
-  <text x="62" y="110" text-anchor="end" class="wl">5s</text>
-  <rect x="68" y="90"  width="4"   height="16" fill="#2a5db0" rx="1"/>
-  <text x="74" y="102" class="scv">0.010s</text>
-  <rect x="68" y="110" width="562" height="22" fill="#e84040" rx="2"/>
-  <text x="78" y="126" class="ltv">3.46s</text>
-  <text x="638" y="126" text-anchor="end" class="snr">0.48</text>
+  <text x="62" y="94"  text-anchor="end" class="wl">5s</text>
+  <rect x="68" y="74"  width="4"   height="14" fill="#2a5db0" rx="1"/>
+  <text x="74" y="85"  class="scv">0.010s</text>
+  <rect x="68" y="92"  width="559" height="18" fill="#e84040" rx="2"/>
+  <text x="78" y="106" class="ltv">3.46s</text>
+  <text x="638" y="106" text-anchor="end" class="snr">0.48</text>
 
   <!-- 30s -->
-  <text x="62" y="170" text-anchor="end" class="wl">30s</text>
-  <rect x="68" y="150" width="6"   height="16" fill="#2a5db0" rx="1"/>
-  <text x="76" y="162" class="scv">0.020s</text>
-  <rect x="68" y="170" width="570" height="22" fill="#e84040" rx="2"/>
-  <text x="78" y="186" class="ltv">3.51s</text>
-  <text x="638" y="186" text-anchor="end" class="snr">0.48</text>
+  <text x="62" y="144" text-anchor="end" class="wl">30s</text>
+  <rect x="68" y="124" width="6"   height="14" fill="#2a5db0" rx="1"/>
+  <text x="76" y="135" class="scv">0.020s</text>
+  <rect x="68" y="142" width="566" height="18" fill="#e84040" rx="2"/>
+  <text x="78" y="156" class="ltv">3.51s</text>
+  <text x="638" y="156" text-anchor="end" class="snr">0.48</text>
+
+  <!-- 60s -->
+  <text x="62" y="194" text-anchor="end" class="wl">60s</text>
+  <rect x="68" y="174" width="7"   height="14" fill="#2a5db0" rx="1"/>
+  <text x="77" y="185" class="scv">0.027s</text>
+  <rect x="68" y="192" width="569" height="18" fill="#e84040" rx="2"/>
+  <text x="78" y="206" class="ltv">3.53s</text>
+  <text x="638" y="206" text-anchor="end" class="snr">0.48</text>
+
+  <!-- 2m -->
+  <text x="62" y="244" text-anchor="end" class="wl">2m</text>
+  <rect x="68" y="224" width="9"   height="14" fill="#2a5db0" rx="1"/>
+  <text x="79" y="235" class="scv">0.035s</text>
+  <rect x="68" y="242" width="554" height="18" fill="#e84040" rx="2"/>
+  <text x="78" y="256" class="ltv">3.43s</text>
+  <text x="638" y="256" text-anchor="end" class="snr">0.45</text>
 
   <!-- Axis -->
-  <line x1="68" y1="200" x2="638" y2="200" stroke="#ddd" stroke-width="1"/>
-  <text x="68"  y="210" text-anchor="middle" class="ax">0</text>
-  <text x="230" y="210" text-anchor="middle" class="ax">1s</text>
-  <text x="392" y="210" text-anchor="middle" class="ax">2s</text>
-  <text x="554" y="210" text-anchor="middle" class="ax">3s</text>
-  <text x="638" y="210" text-anchor="middle" class="ax">3.5s</text>
+  <line x1="68" y1="262" x2="638" y2="262" stroke="#ddd" stroke-width="1"/>
+  <text x="68"  y="270" text-anchor="middle" class="ax">0</text>
+  <text x="230" y="270" text-anchor="middle" class="ax">1s</text>
+  <text x="392" y="270" text-anchor="middle" class="ax">2s</text>
+  <text x="554" y="270" text-anchor="middle" class="ax">3s</text>
+  <text x="638" y="270" text-anchor="middle" class="ax">3.5s</text>
 </svg>
 
 <div class="callout" style="font-size:0.78em;margin-top:0.4em">
 
-The long\_tail noise floor sits at ~3.5s <strong>regardless of window size</strong> — mix-shift dominated. Wider windows only grow SC noise. For the same disturbance, SNR(P50) ≈ 300–400 on long\_tail at every window size.
+The long\_tail noise floor sits at ~3.5s <strong>regardless of window size</strong> — confirmed across 1s through 2m. Mix-shift dominated: SC noise grows slowly with window size; LT noise doesn't move.
 
 </div>
 

@@ -1,31 +1,30 @@
-❯ uv run python3 scrutable-talk/noise_vs_window_parallel.py
-  chunk done for spherical_cow (856.7s)
-  chunk done for long_tail (1124.9s)
-  chunk done for long_tail (1133.5s)
-  chunk done for long_tail (1138.3s)
-  chunk done for long_tail (1997.5s)
-  chunk done for long_tail (2258.5s)
-  chunk done for long_tail (2272.4s)
-  chunk done for long_tail (2282.0s)
-  chunk done for long_tail (3146.4s)
-  chunk done for long_tail (3415.3s)
-  chunk done for long_tail (3421.5s)
-  chunk done for long_tail (3427.5s)
-  chunk done for long_tail (4235.5s)
-  chunk done for long_tail (4479.4s)
-  chunk done for long_tail (4975.7s)
+  chunk done for spherical_cow (1001.2s)
+  chunk done for long_tail (1386.6s)
+  chunk done for long_tail (1413.9s)
+  chunk done for long_tail (1417.5s)
+  chunk done for long_tail (1430.2s)
+  chunk done for long_tail (1434.3s)
+  chunk done for long_tail (1440.5s)
+  chunk done for long_tail (1442.8s)
+  chunk done for long_tail (2327.2s)
+  chunk done for long_tail (2675.7s)
+  chunk done for long_tail (2702.3s)
+  chunk done for long_tail (2710.0s)
+  chunk done for long_tail (2713.6s)
+  chunk done for long_tail (2715.0s)
+  chunk done for long_tail (3210.1s)
 
-All chunks done in 4976.5s — merging and analyzing...
+All chunks done in 3211.1s — merging and analyzing...
 
-Done in 4977.4s
+Done in 3212.2s
 
   Window |  SC noise(P99.9) |  SC noise(P50) |  LT noise(P99.9) |  LT noise(P50) |   Noise ratio(P99.9)
 ----------------------------------------------------------------------------------------------------
       1s |          0.0057s |        0.0002s |          3.4626s |        0.0006s |                 613×
       5s |          0.0096s |        0.0001s |          3.4585s |        0.0005s |                 360×
      30s |          0.0200s |        0.0001s |          3.5082s |        0.0005s |                 176×
-      1m |             None |           None |             None |           None |                 None
-      2m |             None |           None |             None |           None |                 None
+      1m |          0.0265s |        0.0000s |          3.5259s |        0.0004s |                 133×
+      2m |          0.0345s |        0.0000s |          3.4290s |        0.0004s |                  99×
 
 If 'wider windows fix P99.9': LT noise(P99.9) drops like SC noise(P99.9).
 If mix-shift dominated: ratio stays large or grows.
