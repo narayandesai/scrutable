@@ -40,3 +40,13 @@ class ReleaseBundler:
         )
         self._changes.clear()
         return release
+
+
+@dataclass
+class DebugCycle:
+    median_seconds: float = 6.0 * 3600.0
+    sigma: float = 0.84
+
+    def sample_duration(self, rng: np.random.Generator) -> float:
+        mu = np.log(self.median_seconds)
+        return float(rng.lognormal(mu, self.sigma))

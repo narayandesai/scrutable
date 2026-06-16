@@ -85,3 +85,29 @@ def test_bundler_release_ids_are_unique():
     r2 = bundler.add(ReleaseChange(change_id="ch1"))
     assert r1 is not None and r2 is not None
     assert r1.release_id != r2.release_id
+
+
+def test_debug_cycle_sample_positive():
+    from scrutable.pipeline import DebugCycle
+    rng = np.random.default_rng(42)
+    dc = DebugCycle()
+    assert dc.sample_duration(rng) > 0.0
+
+
+def test_debug_cycle_median_approximately_correct():
+    from scrutable.pipeline import DebugCycle
+    rng = np.random.default_rng(0)
+    dc = DebugCycle(median_seconds=6.0 * 3600.0, sigma=0.84)
+    samples = [dc.sample_duration(rng) for _ in range(2000)]
+    # median of lognormal(mu, sigma) is exp(mu) = median_seconds
+    assert abs(float(np.median(samples)) - 6.0 * 3600.0) / (6.0 * 3600.0) < 0.1
+
+
+def test_debug_cycle_has_long_tail():
+    from scrutable.pipeline import DebugCycle
+    rng = np.random.default_rng(0)
+    dc = DebugCycle(median_seconds=6.0 * 3600.0, sigma=0.84)
+    samples = [dc.sample_duration(rng) for _ in range(2000)]
+    p95 = float(np.percentile(samples, 95))
+    # with sigma=0.84, P95 ≈ 24h; allow generous range
+    assert 12.0 * 3600.0 <= p95 <= 48.0 * 3600.0
