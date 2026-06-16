@@ -1,7 +1,12 @@
 import pytest
 import numpy as np
-from scrutable.pipeline import ChangeStream, ReleaseBundler
+from collections import deque
+from scrutable.pipeline import ChangeStream, ReleaseBundler, RolloutPipeline
+from scrutable.rollout import AlarmLog
+from scrutable.plant import PlantConfig, Plant
+from scrutable.event_loop import EventLoop
 from scrutable.models import Disturbance, DisturbanceScope, ReleaseChange
+from scrutable.pipeline import DebugCycle
 
 
 def _factory(change_id: str) -> Disturbance:
@@ -10,6 +15,14 @@ def _factory(change_id: str) -> Disturbance:
         scope=DisturbanceScope(target_type="node", filter_id=None, percentage=1.0),
         node_effects={"latency_addend": 0.3},
     )
+
+
+def _two_cluster_plant() -> Plant:
+    return Plant(PlantConfig(
+        regions=["r1"],
+        clusters={"r1": ["canary", "prod"]},
+        nodes={"canary": ["canary-n1"], "prod": ["prod-n1"]},
+    ))
 
 
 def test_change_stream_no_bug_when_fraction_zero():
@@ -111,3 +124,111 @@ def test_debug_cycle_has_long_tail():
     p95 = float(np.percentile(samples, 95))
     # with sigma=0.84, P95 ≈ 24h; allow generous range
     assert 12.0 * 3600.0 <= p95 <= 48.0 * 3600.0
+
+
+def test_pipeline_starts_rollout_after_bundle_fills():
+    plant = _two_cluster_plant()
+    loop = EventLoop()
+    rng = np.random.default_rng(42)
+    alarm_log = AlarmLog()
+    pipeline = RolloutPipeline(
+        change_stream=ChangeStream(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
+        bundler=ReleaseBundler(bundle_size=2),
+        cluster_order=["canary", "prod"],
+        bake_duration=1.0,
+        alarm_log=alarm_log,
+        debug_cycle=DebugCycle(median_seconds=2.0, sigma=0.1),
+        rollback_duration=1.0,
+    )
+    registered_rollouts: list = []
+    registered_actuators: list = []
+    pipeline._activate(
+        loop=loop,
+        rng=rng,
+        add_rollout=lambda r: registered_rollouts.append(r),
+        add_actuator=lambda a: registered_actuators.append(a),
+    )
+    # change_rate=10 means avg 0.1s between changes; bundle_size=2 → release after ~0.2s
+    loop.run(until=5.0)
+    assert len(registered_rollouts) >= 1
+    assert len(registered_actuators) >= 1
+
+
+def test_pipeline_increments_releases_attempted():
+    loop = EventLoop()
+    rng = np.random.default_rng(0)
+    alarm_log = AlarmLog()
+    pipeline = RolloutPipeline(
+        change_stream=ChangeStream(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
+        bundler=ReleaseBundler(bundle_size=2),
+        cluster_order=["canary", "prod"],
+        bake_duration=1.0,
+        alarm_log=alarm_log,
+        debug_cycle=DebugCycle(median_seconds=1.0, sigma=0.1),
+        rollback_duration=1.0,
+    )
+    pipeline._activate(loop=loop, rng=rng, add_rollout=lambda r: None, add_actuator=lambda a: None)
+    loop.run(until=5.0)
+    assert pipeline.releases_attempted >= 1
+
+
+def test_pipeline_queues_release_when_active_rollout_exists():
+    loop = EventLoop()
+    rng = np.random.default_rng(0)
+    alarm_log = AlarmLog()
+    # Large bake_duration so rollout stays active while more bundles arrive
+    pipeline = RolloutPipeline(
+        change_stream=ChangeStream(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
+        bundler=ReleaseBundler(bundle_size=2),
+        cluster_order=["canary", "prod"],
+        bake_duration=1000.0,
+        alarm_log=alarm_log,
+        debug_cycle=DebugCycle(median_seconds=1.0, sigma=0.1),
+        rollback_duration=1.0,
+    )
+    pipeline._activate(loop=loop, rng=rng, add_rollout=lambda r: None, add_actuator=lambda a: None)
+    loop.run(until=5.0)
+    # First release started immediately; subsequent ones queued
+    assert pipeline.releases_attempted == 1
+    assert len(pipeline._pending) >= 1
+
+
+def test_pipeline_fixed_release_has_no_disturbances():
+    loop = EventLoop()
+    rng = np.random.default_rng(42)
+    alarm_log = AlarmLog()
+    # bug_fraction=1.0: every change has a bug
+    pipeline = RolloutPipeline(
+        change_stream=ChangeStream(change_rate=10.0, bug_fraction=1.0, disturbance_factory=_factory),
+        bundler=ReleaseBundler(bundle_size=1),
+        cluster_order=["canary", "prod"],
+        bake_duration=1.0,
+        alarm_log=alarm_log,
+        debug_cycle=DebugCycle(median_seconds=0.01, sigma=0.1),
+        rollback_duration=0.01,
+    )
+    released_rollouts: list = []
+    pipeline._activate(
+        loop=loop,
+        rng=rng,
+        add_rollout=lambda r: released_rollouts.append(r),
+        add_actuator=lambda a: None,
+    )
+
+    # Let first rollout start
+    loop.run(until=0.5)
+    assert len(released_rollouts) >= 1
+    first_rollout = released_rollouts[0]
+
+    # Manually trigger failure: halt + begin_rollback + on_failure
+    first_rollout.halt(0.5)
+    first_rollout.begin_rollback(0.5, duration=0.01)
+    pipeline._on_failure(first_rollout.release, 0.5)
+
+    # Let rollback + debug cycle complete
+    loop.run(until=5.0)
+
+    # A fixed release (no disturbances) should have been started
+    assert len(released_rollouts) >= 2
+    fixed = released_rollouts[-1].release
+    assert all(ch.disturbance is None for ch in fixed.changes)
