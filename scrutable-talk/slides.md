@@ -146,50 +146,44 @@ style: |
 # Reframing Reliability as Control
 
 **Narayan Desai**
+**Distinguished Engineer, Switch Inc.**
 
 ---
 
 ## The reliability toolkit
 
-- Practitioners have built a toolkit through hard knocks: SLOs, canaries, cell drains
-- These are **feedback controllers** — they just aren't called that
-- The gap: the *plant family* has never been formally characterized, and the controllers have never been rigorously evaluated
+- Practitioners have built a toolkit through hard knocks: SLOs, canaries, auto-drains
+- These practices are very artisinal; every service uses tuned methods to sense
+- Limited rigor, generally very noisy/effort intensive
+- Key problem: every unhappy service is different
 
 ---
 
-## What does a production service look like as a plant?
+## What if we could formalize as control theory?
 
-<div class="columns">
-<div>
+- Monitoring metrics are **sensors**, mitigations are **feedback controllers**
+- The gap: the *plant family* of production services has never been formally characterized or rigorously evaluated
+- Missing a model/simulator of production services. 
 
-### Outputs & disturbances
+## Prior art: reliability analytics
 
-- **Outputs:** latency distribution, error rate
-- **Disturbances:** bugs, dependency failures, hardware faults
-
-</div>
-<div>
-
-### Key observation
-
-**Reliability is an attractor.** Unreliable services get fixed → the observable space is compressed.
-
-- Empirical result (validated across hundreds of production services [prior work]): lognormal latency + Weibull error rate spans production-realistic behavior
-- Consequence: **we can simulate the universe of services people actually care about**
-
-</div>
-</div>
+- Build granular per-workload parametric log-normal models from historical data
+- Validate using per-workload empirical distribution (Kolmogorov-Smirnoff Statistic)
+- Performance events can be transformed into quantiles (controlling for workload differences)
+- This approach has been used to reliably model hundreds of services in production at >500M qps with good accuracy
 
 ---
 
-## Scrutable: a testbed with ground truth
+## Scrutable: a simulator with accurate noisy behavior
 
+- Key idea: use these parametric models to build a discrete event simulator that produces realistic performance data
 - Discrete-event simulator with parametric workload models
-- Fault injection with known timing and scope
+- Fault injection with known timing and scope gives us ground truth, and allows us to assess effectivess of sensors and feedback controllers
+- Investment in reliability is an attractor in the space; this results in consistency of performance and failure rates
 
 <div class="callout">
 
-**The key property:** you know exactly what you injected and when — so you can measure detection latency, false positive rate, and blast radius reproducibly across the full plant family.
+**The key property:** you know exactly what you injected and when — so you can measure detection latency, false positive rate, SNR in a realistic environment.
 
 </div>
 
