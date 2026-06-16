@@ -191,3 +191,31 @@ class Rollout:
         if stage_idx >= len(self._gates):
             return True
         return all(gate(self.status, sim_time) for gate in self._gates[stage_idx])
+
+
+class RolloutActuator:
+    def __init__(
+        self,
+        rollout: Rollout,
+        alarm_log: AlarmLog,
+        rollback_duration: float = 3600.0,
+        on_failure: Callable[[Release, float], None] | None = None,
+    ) -> None:
+        self._rollout = rollout
+        self._alarm_log = alarm_log
+        self._rollback_duration = rollback_duration
+        self._on_failure = on_failure
+
+    def act(
+        self,
+        alarm: Alarm,
+        sim_time: float,
+        rollouts: "RolloutSystem",
+        ops: "OperationsSystem",
+    ) -> None:
+        self._alarm_log.record(alarm, sim_time)
+        if self._rollout.status.state == RolloutState.IN_PROGRESS:
+            self._rollout.halt(sim_time)
+            self._rollout.begin_rollback(sim_time, self._rollback_duration)
+            if self._on_failure is not None:
+                self._on_failure(self._rollout.release, sim_time)
