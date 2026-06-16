@@ -174,7 +174,7 @@ style: |
 
 **Reliability is an attractor.** Unreliable services get fixed → the observable space is compressed.
 
-- Empirical claim: lognormal latency + Weibull error rate spans production-realistic behavior
+- Empirical result (validated across hundreds of production services [prior work]): lognormal latency + Weibull error rate spans production-realistic behavior
 - Consequence: **we can simulate the universe of services people actually care about**
 
 </div>
