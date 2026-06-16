@@ -38,6 +38,18 @@ class PercentileRecorderSensor:
 @dataclass
 class LatencySloCalibrator:
     target_fpr: float = 0.001
+    max_daily_alerts: float | None = None
+    max_alerts_per_bake: float | None = None
+    bake_duration: float | None = None
+
+    def _effective_fpr(self, window_size: float) -> float:
+        """Return the strictest per-window FPR across all three constraints."""
+        fpr = self.target_fpr
+        if self.max_daily_alerts is not None:
+            fpr = min(fpr, self.max_daily_alerts * window_size / 86400.0)
+        if self.max_alerts_per_bake is not None and self.bake_duration is not None:
+            fpr = min(fpr, self.max_alerts_per_bake * window_size / self.bake_duration)
+        return fpr
 
     def calibrate(
         self,
@@ -66,7 +78,8 @@ class LatencySloCalibrator:
                 f"Empirical calibration needs ≥2 windows but got {len(values)}. "
                 f"Increase calibration_duration beyond {2 * window_size:.1f}s or reduce window_size."
             )
-        threshold = float(np.percentile(values, (1.0 - self.target_fpr) * 100.0))
+        effective_fpr = self._effective_fpr(window_size)
+        threshold = float(np.percentile(values, (1.0 - effective_fpr) * 100.0))
         return SloTarget(percentile=percentile, threshold=threshold, window_size=window_size)
 
 

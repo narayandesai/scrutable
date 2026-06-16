@@ -131,6 +131,86 @@ def test_empirical_calibrator_raises_with_fewer_than_two_windows():
         LatencySloCalibrator(target_fpr=0.01).calibrate(buf, calibration_end=1.0, percentile=99.9, window_size=1.0)
 
 
+def test_effective_fpr_uses_target_fpr_when_stricter():
+    # window_size=3600 (1 hour), max_daily_alerts=4 → fpr_from_daily = 4/24 ≈ 0.167
+    # target_fpr=0.001 is stricter → effective = 0.001
+    cal = LatencySloCalibrator(target_fpr=0.001, max_daily_alerts=4.0)
+    assert cal._effective_fpr(window_size=3600.0) == pytest.approx(0.001)
+
+
+def test_effective_fpr_uses_daily_limit_when_stricter():
+    # window_size=3600 (1 hour), max_daily_alerts=1 → fpr_from_daily = 1/24 ≈ 0.042
+    # target_fpr=0.1 is looser → effective = 1/24
+    cal = LatencySloCalibrator(target_fpr=0.1, max_daily_alerts=1.0)
+    assert cal._effective_fpr(window_size=3600.0) == pytest.approx(1.0 / 24.0)
+
+
+def test_effective_fpr_scales_with_window_size():
+    # max_daily_alerts=4: with 1-min windows → fpr_from_daily = 4/1440
+    # with 1-hour windows → fpr_from_daily = 4/24
+    cal = LatencySloCalibrator(target_fpr=1.0, max_daily_alerts=4.0)
+    assert cal._effective_fpr(60.0) == pytest.approx(4.0 / 1440.0)
+    assert cal._effective_fpr(3600.0) == pytest.approx(4.0 / 24.0)
+
+
+def test_calibrator_daily_limit_raises_threshold_vs_looser_fpr():
+    # With a tighter effective FPR the threshold should be higher (more conservative).
+    rng = np.random.default_rng(0)
+    buf = _make_buf_lognormal(200, 1.0, 500, -2.3, 0.3, rng)
+    # Loose: target_fpr=0.1, daily limit so loose it won't bind (1000 alerts/day)
+    t_loose = LatencySloCalibrator(target_fpr=0.1, max_daily_alerts=1000.0).calibrate(
+        buf, calibration_end=200.0, percentile=99.9, window_size=1.0
+    )
+    # Tight: daily limit of 4 with 1-second windows → fpr_from_daily = 4/86400 ≈ 4.6e-5
+    t_tight = LatencySloCalibrator(target_fpr=0.1, max_daily_alerts=4.0).calibrate(
+        buf, calibration_end=200.0, percentile=99.9, window_size=1.0
+    )
+    assert t_tight.threshold >= t_loose.threshold
+
+
+def test_effective_fpr_bake_constraint_binds_when_strictest():
+    # bake_duration=172800s (2d), max_alerts_per_bake=0.5, window_size=300s
+    # fpr_from_bake = 0.5 * 300 / 172800 ≈ 8.68e-4 — stricter than target_fpr=0.01
+    cal = LatencySloCalibrator(
+        target_fpr=0.01,
+        max_daily_alerts=4.0,
+        max_alerts_per_bake=0.5,
+        bake_duration=172800.0,
+    )
+    expected = 0.5 * 300.0 / 172800.0
+    assert cal._effective_fpr(window_size=300.0) == pytest.approx(expected)
+
+
+def test_effective_fpr_bake_constraint_ignored_without_bake_duration():
+    cal = LatencySloCalibrator(target_fpr=0.01, max_alerts_per_bake=0.5, bake_duration=None)
+    assert cal._effective_fpr(window_size=300.0) == pytest.approx(0.01)
+
+
+def test_effective_fpr_all_three_constraints_take_minimum():
+    # target_fpr=0.1, daily=0.05 (fpr_from_daily=0.05*60/86400≈3.5e-5), bake not binding
+    cal = LatencySloCalibrator(
+        target_fpr=0.1,
+        max_daily_alerts=0.05,
+        max_alerts_per_bake=0.5,
+        bake_duration=60.0,  # 1-minute bake: fpr_from_bake=0.5*60/60=0.5 → not binding
+    )
+    expected = 0.05 * 60.0 / 86400.0  # daily constraint wins
+    assert cal._effective_fpr(window_size=60.0) == pytest.approx(expected)
+
+
+def test_bake_constraint_raises_threshold_vs_no_bake_constraint():
+    rng = np.random.default_rng(0)
+    buf = _make_buf_lognormal(200, 1.0, 500, -2.3, 0.3, rng)
+    t_no_bake = LatencySloCalibrator(target_fpr=0.1).calibrate(
+        buf, calibration_end=200.0, percentile=99.9, window_size=1.0
+    )
+    # bake constraint with short bake and tight budget → very low per-window FPR
+    t_bake = LatencySloCalibrator(
+        target_fpr=0.1, max_alerts_per_bake=0.5, bake_duration=10.0
+    ).calibrate(buf, calibration_end=200.0, percentile=99.9, window_size=1.0)
+    assert t_bake.threshold >= t_no_bake.threshold
+
+
 # --- LatencySloSensor ---
 
 def test_latency_sensor_satisfies_sensor_protocol():
