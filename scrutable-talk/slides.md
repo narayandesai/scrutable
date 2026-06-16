@@ -232,69 +232,80 @@ $$\text{SNR}(p) = \frac{\text{signal}(p)}{\text{noise}(p)} = \frac{\text{percent
 
 ## P99.9 noise floor is window-size invariant for high-variance services
 
-<div style="font-size:0.78em;font-family:'Helvetica Neue',Arial,sans-serif;max-width:680px;margin:0.3em auto">
-  <div style="display:flex;gap:1.5em;margin-bottom:0.5em;padding-left:3em">
-    <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:12px;height:12px;background:#2a5db0;border-radius:2px;flex-shrink:0"></span>spherical_cow</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:12px;height:12px;background:#e84040;border-radius:2px;flex-shrink:0"></span>long_tail</span>
-    <span style="margin-left:auto;font-weight:bold;color:#e84040">SNR(P99.9)</span>
+<div style="font-size:0.72em;font-family:'Helvetica Neue',Arial,sans-serif;margin-top:0.3em">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2em">
+
+<div>
+<div style="font-weight:bold;margin-bottom:4px;color:#1a1a2e">SNR(P99.9) — detectable when &gt; 1</div>
+<div style="position:relative;height:170px;padding-top:20px;box-sizing:border-box;display:flex;align-items:flex-end;gap:5px;border-bottom:1px solid #ccc;overflow:visible">
+  <div style="position:absolute;left:0;right:0;bottom:calc(1.82% + 1px);border-top:1.5px dashed #e84040;z-index:1"></div>
+  <span style="position:absolute;right:2px;bottom:calc(1.82% + 3px);color:#e84040;font-weight:bold;font-size:0.9em">SNR=1</span>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:92.7%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">51</span></div>
+    <div style="flex:1;height:2px;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040">.48</span></div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">1s</span>
-    <div style="flex:1">
-      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:3px;width:0.17%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.006s</span></div>
-      <div style="height:20px"><div style="width:98.6%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.46s</span></div></div>
-    </div>
-    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.48</span>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:54.5%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">30</span></div>
+    <div style="flex:1;height:2px;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040">.48</span></div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">5s</span>
-    <div style="flex:1">
-      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:4px;width:0.29%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.010s</span></div>
-      <div style="height:20px"><div style="width:98.6%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.46s</span></div></div>
-    </div>
-    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.48</span>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:26.4%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">14</span></div>
+    <div style="flex:1;height:2px;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040">.48</span></div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">30s</span>
-    <div style="flex:1">
-      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:6px;width:0.57%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.020s</span></div>
-      <div style="height:20px"><div style="width:100%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.51s</span></div></div>
-    </div>
-    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.48</span>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:18.9%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">10</span></div>
+    <div style="flex:1;height:2px;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040">.48</span></div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">60s</span>
-    <div style="flex:1">
-      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:7px;width:0.77%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.027s</span></div>
-      <div style="height:20px"><div style="width:100%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.53s</span></div></div>
-    </div>
-    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.48</span>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:13.8%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">7.6</span></div>
+    <div style="flex:1;height:2px;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040">.45</span></div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-    <span style="width:2.5em;text-align:right;font-weight:bold;color:#1a1a2e;flex-shrink:0">2m</span>
-    <div style="flex:1">
-      <div style="height:14px;display:flex;align-items:center;margin-bottom:2px"><div style="min-width:9px;width:1.00%;height:100%;background:#2a5db0;border-radius:1px"></div><span style="color:#2a5db0;margin-left:4px">0.035s</span></div>
-      <div style="height:20px"><div style="width:98.0%;height:100%;background:#e84040;border-radius:2px;display:flex;align-items:center;padding-left:8px;box-sizing:border-box"><span style="color:white;font-weight:bold">3.43s</span></div></div>
-    </div>
-    <span style="color:#e84040;font-weight:bold;width:3em;text-align:right;flex-shrink:0">0.45</span>
+</div>
+<div style="display:flex;gap:5px;padding-top:3px;color:#888">
+  <div style="flex:1;text-align:center">1s</div><div style="flex:1;text-align:center">5s</div><div style="flex:1;text-align:center">30s</div><div style="flex:1;text-align:center">60s</div><div style="flex:1;text-align:center">2m</div>
+</div>
+</div>
+
+<div>
+<div style="font-weight:bold;margin-bottom:4px;color:#1a1a2e">False positive rate — alarm without fault</div>
+<div style="position:relative;height:170px;padding-top:20px;box-sizing:border-box;display:flex;align-items:flex-end;gap:5px;border-bottom:1px solid #ccc;overflow:visible">
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:5%;background:#2a5db0;border-radius:2px 2px 0 0;min-height:2px;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0">5%</span></div>
+    <div style="flex:1;height:91.2%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040;font-weight:bold">91%</span></div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px">
-    <span style="width:2.5em;flex-shrink:0"></span>
-    <div style="flex:1;position:relative;height:16px">
-      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:#ddd"></div>
-      <span style="position:absolute;left:0;transform:translateX(-50%);color:#999;font-size:0.9em">0</span>
-      <span style="position:absolute;left:28.4%;transform:translateX(-50%);color:#999;font-size:0.9em">1s</span>
-      <span style="position:absolute;left:56.8%;transform:translateX(-50%);color:#999;font-size:0.9em">2s</span>
-      <span style="position:absolute;left:85.3%;transform:translateX(-50%);color:#999;font-size:0.9em">3s</span>
-      <span style="position:absolute;right:0;color:#999;font-size:0.9em">3.5s</span>
-    </div>
-    <span style="width:3em;flex-shrink:0"></span>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:1.25%;background:#2a5db0;border-radius:2px 2px 0 0;min-height:2px;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0">1%</span></div>
+    <div style="flex:1;height:93.1%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040;font-weight:bold">93%</span></div>
   </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:5%;background:#2a5db0;border-radius:2px 2px 0 0;min-height:2px;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0">5%</span></div>
+    <div style="flex:1;height:75.8%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040;font-weight:bold">76%</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:3.3%;background:#2a5db0;border-radius:2px 2px 0 0;min-height:2px;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0">3%</span></div>
+    <div style="flex:1;height:51.7%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040;font-weight:bold">52%</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:3.3%;background:#2a5db0;border-radius:2px 2px 0 0;min-height:2px;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0">3%</span></div>
+    <div style="flex:1;height:3.3%;background:#e84040;opacity:0.3;border-radius:2px 2px 0 0;min-height:2px;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#aaa">3%†</span></div>
+  </div>
+</div>
+<div style="display:flex;gap:5px;padding-top:3px;color:#888">
+  <div style="flex:1;text-align:center">1s</div><div style="flex:1;text-align:center">5s</div><div style="flex:1;text-align:center">30s</div><div style="flex:1;text-align:center">60s</div><div style="flex:1;text-align:center">2m</div>
+</div>
+</div>
+
+</div>
+<div style="display:flex;gap:1.5em;margin-top:0.4em;align-items:center">
+  <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#2a5db0;border-radius:2px"></span> spherical_cow</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#e84040;border-radius:2px"></span> long_tail</span>
+  <span style="color:#aaa;margin-left:auto">† 2m degenerate: calibration = evaluation set</span>
+</div>
 </div>
 
 <div class="callout" style="font-size:0.78em;margin-top:0.4em">
 
-The long\_tail noise floor sits at ~3.5s <strong>regardless of window size</strong> — confirmed across 1s through 2m. Mix-shift dominated: SC noise grows slowly with window size; LT noise doesn't move.
+SC detects perfectly at every window size (SNR 7–51, all above the line). LT SNR stays at **0.48** — noise exceeds signal regardless of window. FPR: 51–93% on clean traffic through 60s windows. Wider windows don't fix either problem.
 
 </div>
 
