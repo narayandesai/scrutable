@@ -198,6 +198,7 @@ def _analyze_buffer(
     total_duration: float,
     percentile: float,
     target_fpr: float,
+    disturbance_duration: float | None = None,
 ) -> PerformancePoint:
     calibrator = LatencySloCalibrator(target_fpr=target_fpr)
     calibrated = calibrator.calibrate(buf, calibration_end=calibration_duration, percentile=percentile, window_size=window_size)
@@ -211,17 +212,23 @@ def _analyze_buffer(
     burnin_pct: dict[float, list[float]] = {p: [] for p in _SNR_PERCENTILES}
     post_pct: dict[float, list[float]] = {p: [] for p in _SNR_PERCENTILES}
 
+    disturbance_end = (
+        disturbance_at + disturbance_duration
+        if disturbance_duration is not None
+        else total_duration
+    )
+
     t = 0.0
     while t + window_size <= total_duration:
         window = buf.window(t, t + window_size)
         if window:
             signals = sensor.measure(window)
             fired = bool(detector.detect(signals))
-            is_disturbance = t >= disturbance_at
-            bucket = post_pct if is_disturbance else burnin_pct
-            for p in _SNR_PERCENTILES:
-                bucket[p].append(window.percentile(p))
-            if is_disturbance:
+            in_disturbance = disturbance_at <= t < disturbance_end
+            in_burnin = t < disturbance_at
+            if in_disturbance:
+                for p in _SNR_PERCENTILES:
+                    post_pct[p].append(window.percentile(p))
                 if fired:
                     tp += 1
                     dl = (t + window_size) - disturbance_at
@@ -230,11 +237,14 @@ def _analyze_buffer(
                         time_to_first_detection = dl
                 else:
                     fn += 1
-            else:
+            elif in_burnin:
+                for p in _SNR_PERCENTILES:
+                    burnin_pct[p].append(window.percentile(p))
                 if fired:
                     fp += 1
                 else:
                     tn += 1
+            # post-fault windows (t >= disturbance_end) are excluded from all metrics
         t += window_size
 
     precision = tp / (tp + fp) if (tp + fp) > 0 else 1.0

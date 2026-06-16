@@ -120,6 +120,7 @@ if __name__ == "__main__":
                 total_duration=TOTAL_DURATION,
                 percentile=PERCENTILE,
                 target_fpr=TARGET_FPR,
+                disturbance_duration=POST_DIST,
             )
             for ws in WINDOW_SIZES
         ]
