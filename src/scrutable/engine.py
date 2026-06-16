@@ -14,7 +14,7 @@ from scrutable.actuator import Actuator
 from scrutable.models import WorkloadState, RolloutState
 from scrutable.rollout import Rollout
 from scrutable.traffic import WorkloadMix
-from scrutable.pipeline import RolloutPipeline
+from scrutable.pipeline import RolloutController
 
 
 class SimulationEngine:
@@ -111,7 +111,7 @@ class SimulationEngine:
         self._rollouts.register(rollout)
         self._schedule_rollout_stage(rollout, stage_idx=0, at=rollout.start_at)
 
-    def add_rollout_pipeline(self, pipeline: RolloutPipeline) -> None:
+    def add_rollout_pipeline(self, pipeline: RolloutController) -> None:
         pipeline._activate(
             loop=self._loop,
             rng=self._rng,

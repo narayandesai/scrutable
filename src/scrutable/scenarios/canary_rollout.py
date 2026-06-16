@@ -6,7 +6,7 @@ from scrutable.engine import SimulationEngine
 from scrutable.traffic import WorkloadEntry, WorkloadMix
 from scrutable.models import Disturbance, DisturbanceScope, WorkloadModel
 from scrutable.rollout import AlarmLog
-from scrutable.pipeline import ChangeStream, ReleaseBundler, DebugCycle, RolloutPipeline
+from scrutable.pipeline import ChangeSource, ReleaseBundler, RemediationCycle, RolloutController
 from scrutable.detectors.slo import LatencySloCalibrator, LatencySloSensor, LatencySloDetector, SloTarget
 
 
@@ -97,8 +97,8 @@ def run_canary_rollout(
         )
 
     alarm_log = AlarmLog()
-    pipeline = RolloutPipeline(
-        change_stream=ChangeStream(
+    pipeline = RolloutController(
+        change_stream=ChangeSource(
             change_rate=change_rate,
             bug_fraction=bug_fraction,
             disturbance_factory=make_disturbance,
@@ -107,7 +107,7 @@ def run_canary_rollout(
         cluster_order=["canary", "prod"],
         bake_duration=bake_duration,
         alarm_log=alarm_log,
-        debug_cycle=DebugCycle(median_seconds=debug_median_s, sigma=debug_sigma),
+        debug_cycle=RemediationCycle(median_seconds=debug_median_s, sigma=debug_sigma),
         rollback_duration=rollback_duration,
     )
     engine.add_rollout_pipeline(pipeline)

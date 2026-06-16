@@ -9,7 +9,7 @@ from scrutable.rollout import AlarmLog, GateCallback, Rollout, RolloutActuator
 
 
 @dataclass
-class ChangeStream:
+class ChangeSource:
     change_rate: float
     bug_fraction: float
     disturbance_factory: Callable[[str], Disturbance]
@@ -46,7 +46,7 @@ class ReleaseBundler:
 
 
 @dataclass
-class DebugCycle:
+class RemediationCycle:
     median_seconds: float = 6.0 * 3600.0
     sigma: float = 0.84
 
@@ -55,15 +55,15 @@ class DebugCycle:
         return float(rng.lognormal(mu, self.sigma))
 
 
-class RolloutPipeline:
+class RolloutController:
     def __init__(
         self,
-        change_stream: ChangeStream,
+        change_stream: ChangeSource,
         bundler: ReleaseBundler,
         cluster_order: list[str],
         bake_duration: float,
         alarm_log: AlarmLog,
-        debug_cycle: DebugCycle,
+        debug_cycle: RemediationCycle,
         rollback_duration: float = 3600.0,
     ) -> None:
         self._change_stream = change_stream

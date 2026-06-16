@@ -1,11 +1,11 @@
 import pytest
 import numpy as np
 from collections import deque
-from scrutable.pipeline import ChangeStream, ReleaseBundler, RolloutPipeline
+from scrutable.pipeline import ChangeSource, ReleaseBundler, RolloutController
 from scrutable.rollout import AlarmLog
 from scrutable.event_loop import EventLoop
 from scrutable.models import Disturbance, DisturbanceScope, ReleaseChange
-from scrutable.pipeline import DebugCycle
+from scrutable.pipeline import RemediationCycle
 
 
 def _factory(change_id: str) -> Disturbance:
@@ -18,7 +18,7 @@ def _factory(change_id: str) -> Disturbance:
 
 def test_change_stream_no_bug_when_fraction_zero():
     rng = np.random.default_rng(42)
-    stream = ChangeStream(change_rate=1.0, bug_fraction=0.0, disturbance_factory=_factory)
+    stream = ChangeSource(change_rate=1.0, bug_fraction=0.0, disturbance_factory=_factory)
     change = stream.generate_change("ch1", rng)
     assert change.change_id == "ch1"
     assert change.disturbance is None
@@ -26,7 +26,7 @@ def test_change_stream_no_bug_when_fraction_zero():
 
 def test_change_stream_always_bug_when_fraction_one():
     rng = np.random.default_rng(42)
-    stream = ChangeStream(change_rate=1.0, bug_fraction=1.0, disturbance_factory=_factory)
+    stream = ChangeSource(change_rate=1.0, bug_fraction=1.0, disturbance_factory=_factory)
     change = stream.generate_change("ch1", rng)
     assert change.disturbance is not None
     assert change.disturbance.disturbance_id == "bug-ch1"
@@ -34,7 +34,7 @@ def test_change_stream_always_bug_when_fraction_one():
 
 def test_change_stream_bug_fraction_statistical():
     rng = np.random.default_rng(0)
-    stream = ChangeStream(change_rate=1.0, bug_fraction=0.1, disturbance_factory=_factory)
+    stream = ChangeSource(change_rate=1.0, bug_fraction=0.1, disturbance_factory=_factory)
     n = 2000
     bugs = sum(
         1 for i in range(n)
@@ -46,14 +46,14 @@ def test_change_stream_bug_fraction_statistical():
 
 def test_change_stream_next_arrival_delay_positive():
     rng = np.random.default_rng(42)
-    stream = ChangeStream(change_rate=2.0, bug_fraction=0.1, disturbance_factory=_factory)
+    stream = ChangeSource(change_rate=2.0, bug_fraction=0.1, disturbance_factory=_factory)
     delay = stream.next_arrival_delay(rng)
     assert delay > 0.0
 
 
 def test_change_stream_next_arrival_delay_mean():
     rng = np.random.default_rng(0)
-    stream = ChangeStream(change_rate=2.0, bug_fraction=0.1, disturbance_factory=_factory)
+    stream = ChangeSource(change_rate=2.0, bug_fraction=0.1, disturbance_factory=_factory)
     delays = [stream.next_arrival_delay(rng) for _ in range(2000)]
     assert abs(np.mean(delays) - 0.5) < 0.05  # mean should be ~1/rate = 0.5
 
@@ -92,25 +92,25 @@ def test_bundler_release_ids_are_unique():
 
 
 def test_debug_cycle_sample_positive():
-    from scrutable.pipeline import DebugCycle
+    from scrutable.pipeline import RemediationCycle
     rng = np.random.default_rng(42)
-    dc = DebugCycle()
+    dc = RemediationCycle()
     assert dc.sample_duration(rng) > 0.0
 
 
 def test_debug_cycle_median_approximately_correct():
-    from scrutable.pipeline import DebugCycle
+    from scrutable.pipeline import RemediationCycle
     rng = np.random.default_rng(0)
-    dc = DebugCycle(median_seconds=6.0 * 3600.0, sigma=0.84)
+    dc = RemediationCycle(median_seconds=6.0 * 3600.0, sigma=0.84)
     samples = [dc.sample_duration(rng) for _ in range(2000)]
     # median of lognormal(mu, sigma) is exp(mu) = median_seconds
     assert abs(float(np.median(samples)) - 6.0 * 3600.0) / (6.0 * 3600.0) < 0.1
 
 
 def test_debug_cycle_has_long_tail():
-    from scrutable.pipeline import DebugCycle
+    from scrutable.pipeline import RemediationCycle
     rng = np.random.default_rng(0)
-    dc = DebugCycle(median_seconds=6.0 * 3600.0, sigma=0.84)
+    dc = RemediationCycle(median_seconds=6.0 * 3600.0, sigma=0.84)
     samples = [dc.sample_duration(rng) for _ in range(2000)]
     p95 = float(np.percentile(samples, 95))
     # with sigma=0.84, P95 ≈ 24h; allow generous range
@@ -121,13 +121,13 @@ def test_pipeline_starts_rollout_after_bundle_fills():
     loop = EventLoop()
     rng = np.random.default_rng(42)
     alarm_log = AlarmLog()
-    pipeline = RolloutPipeline(
-        change_stream=ChangeStream(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
+    pipeline = RolloutController(
+        change_stream=ChangeSource(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
         bundler=ReleaseBundler(bundle_size=2),
         cluster_order=["canary", "prod"],
         bake_duration=1.0,
         alarm_log=alarm_log,
-        debug_cycle=DebugCycle(median_seconds=2.0, sigma=0.1),
+        debug_cycle=RemediationCycle(median_seconds=2.0, sigma=0.1),
         rollback_duration=1.0,
     )
     registered_rollouts: list = []
@@ -148,13 +148,13 @@ def test_pipeline_increments_releases_attempted():
     loop = EventLoop()
     rng = np.random.default_rng(0)
     alarm_log = AlarmLog()
-    pipeline = RolloutPipeline(
-        change_stream=ChangeStream(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
+    pipeline = RolloutController(
+        change_stream=ChangeSource(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
         bundler=ReleaseBundler(bundle_size=2),
         cluster_order=["canary", "prod"],
         bake_duration=1.0,
         alarm_log=alarm_log,
-        debug_cycle=DebugCycle(median_seconds=1.0, sigma=0.1),
+        debug_cycle=RemediationCycle(median_seconds=1.0, sigma=0.1),
         rollback_duration=1.0,
     )
     pipeline._activate(loop=loop, rng=rng, add_rollout=lambda r: None, add_actuator=lambda a: None)
@@ -167,13 +167,13 @@ def test_pipeline_queues_release_when_active_rollout_exists():
     rng = np.random.default_rng(0)
     alarm_log = AlarmLog()
     # Large bake_duration so rollout stays active while more bundles arrive
-    pipeline = RolloutPipeline(
-        change_stream=ChangeStream(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
+    pipeline = RolloutController(
+        change_stream=ChangeSource(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
         bundler=ReleaseBundler(bundle_size=2),
         cluster_order=["canary", "prod"],
         bake_duration=1000.0,
         alarm_log=alarm_log,
-        debug_cycle=DebugCycle(median_seconds=1.0, sigma=0.1),
+        debug_cycle=RemediationCycle(median_seconds=1.0, sigma=0.1),
         rollback_duration=1.0,
     )
     pipeline._activate(loop=loop, rng=rng, add_rollout=lambda r: None, add_actuator=lambda a: None)
@@ -188,13 +188,13 @@ def test_pipeline_fixed_release_has_no_disturbances():
     rng = np.random.default_rng(42)
     alarm_log = AlarmLog()
     # bug_fraction=1.0: every change has a bug
-    pipeline = RolloutPipeline(
-        change_stream=ChangeStream(change_rate=10.0, bug_fraction=1.0, disturbance_factory=_factory),
+    pipeline = RolloutController(
+        change_stream=ChangeSource(change_rate=10.0, bug_fraction=1.0, disturbance_factory=_factory),
         bundler=ReleaseBundler(bundle_size=1),
         cluster_order=["canary", "prod"],
         bake_duration=1.0,
         alarm_log=alarm_log,
-        debug_cycle=DebugCycle(median_seconds=0.01, sigma=0.1),
+        debug_cycle=RemediationCycle(median_seconds=0.01, sigma=0.1),
         rollback_duration=0.01,
     )
     released_rollouts: list = []

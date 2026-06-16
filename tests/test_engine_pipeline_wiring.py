@@ -5,7 +5,7 @@ from scrutable.engine import SimulationEngine
 from scrutable.traffic import WorkloadEntry, WorkloadMix
 from scrutable.models import WorkloadModel, Disturbance, DisturbanceScope
 from scrutable.rollout import AlarmLog
-from scrutable.pipeline import ChangeStream, ReleaseBundler, DebugCycle, RolloutPipeline
+from scrutable.pipeline import ChangeSource, ReleaseBundler, RemediationCycle, RolloutController
 
 
 def _plant() -> Plant:
@@ -46,13 +46,13 @@ def test_pipeline_registered_and_runs():
     engine = _engine(plant)
     alarm_log = AlarmLog()
 
-    pipeline = RolloutPipeline(
-        change_stream=ChangeStream(change_rate=5.0, bug_fraction=0.0, disturbance_factory=_factory),
+    pipeline = RolloutController(
+        change_stream=ChangeSource(change_rate=5.0, bug_fraction=0.0, disturbance_factory=_factory),
         bundler=ReleaseBundler(bundle_size=3),
         cluster_order=["canary", "prod"],
         bake_duration=2.0,
         alarm_log=alarm_log,
-        debug_cycle=DebugCycle(median_seconds=1.0, sigma=0.1),
+        debug_cycle=RemediationCycle(median_seconds=1.0, sigma=0.1),
         rollback_duration=1.0,
     )
     engine.add_rollout_pipeline(pipeline)
@@ -66,13 +66,13 @@ def test_benign_pipeline_all_releases_complete():
     engine = _engine(plant)
     alarm_log = AlarmLog()
 
-    pipeline = RolloutPipeline(
-        change_stream=ChangeStream(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
+    pipeline = RolloutController(
+        change_stream=ChangeSource(change_rate=10.0, bug_fraction=0.0, disturbance_factory=_factory),
         bundler=ReleaseBundler(bundle_size=2),
         cluster_order=["canary", "prod"],
         bake_duration=1.0,
         alarm_log=alarm_log,
-        debug_cycle=DebugCycle(median_seconds=1.0, sigma=0.1),
+        debug_cycle=RemediationCycle(median_seconds=1.0, sigma=0.1),
         rollback_duration=0.5,
     )
     engine.add_rollout_pipeline(pipeline)
