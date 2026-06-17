@@ -158,7 +158,7 @@ class RolloutController:
         gates: list[list[GateCallback]] = [[] for _ in self._cluster_order]
         if len(self._cluster_order) > 1:
             gates[1] = [
-                lambda status, t, dt=canary_deploy_time: not self._alarm_log.any_since(dt)
+                lambda status, t, dt=canary_deploy_time: not self._alarm_log.any_since(dt + 1e-9)
             ]
 
         rollout = Rollout(
