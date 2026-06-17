@@ -219,7 +219,7 @@ style: |
 | False positive rate | Alarm frequency on clean traffic |
 | SNR | Signal / noise at each percentile |
 
-**Ground truth is exact:** injection time, scope, and magnitude are known — so every metric is reproducible across the full service space.
+**Ground truth is known:** injection time, scope, and magnitude are precisely known — we can evaluate outcomes!
 
 </div>
 </div>
@@ -238,7 +238,7 @@ SLO thresholds are the canonical sensor: monitor P99.9, alert when it crosses a 
 
 <div class="warning">
 
-**Result:** detection works cleanly on low-variance services, fails on high-variance ones — same disturbance becomes invisible as variance grows
+**Result:** detection works cleanly on low-variance services, fails on high-variance ones — same disturbance becomes invisible as natural workload variance grows
 
 </div>
 
@@ -268,7 +268,7 @@ $$\text{SNR}(p) = \frac{\text{signal}(p)}{\text{noise}(p)} = \frac{\text{percent
 <div style="font-weight:bold;margin-bottom:4px;color:#1a1a2e">SNR(P99.9) — detectable when &gt; 1</div>
 <div style="position:relative;height:170px;padding-top:20px;box-sizing:border-box;display:flex;align-items:flex-end;gap:5px;border-bottom:1px solid #ccc;overflow:visible">
   <div style="position:absolute;left:0;right:0;bottom:calc(1.82% + 1px);border-top:1.5px dashed #e84040;z-index:1"></div>
-  <span style="position:absolute;right:2px;bottom:calc(1.82% + 3px);color:#e84040;font-weight:bold;font-size:0.9em">SNR=1</span>
+  <!-- <span style="position:absolute;right:2px;bottom:calc(1.82% + 3px);color:#e84040;font-weight:bold;font-size:0.9em">SNR=1</span> -->
   <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
     <div style="flex:1;height:92.7%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">51</span></div>
     <div style="flex:1;height:2px;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100% + 1px);left:0;right:0;text-align:center;color:#e84040">.48</span></div>
