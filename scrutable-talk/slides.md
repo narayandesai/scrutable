@@ -162,17 +162,17 @@ style: |
 ## What if we could formalize as control theory?
 
 - Monitoring metrics are **sensors**, mitigations are **feedback controllers**
-- The gap: the *plant family* of production services has never been formally characterized or rigorously evaluated
-- Missing a model/simulator of production services. 
+- The gap: the *space of production services* has never been formally characterized or rigorously evaluated
+- Missing a *realistic* model/simulator of production services. 
 
 ---
 
 ## Prior art: reliability analytics
 
 - Build granular per-workload parametric log-normal models from historical data
-- Validate using per-workload empirical distribution (Kolmogorov-Smirnoff Statistic)
+- Validate using KS statistic against per-workload empirical distribution 
 - Performance events can be transformed into quantiles (controlling for workload differences)
-- This approach has been used to reliably model hundreds of services in production at >500M qps with good accuracy
+- This approach has been used to reliably model hundreds of services in production at >500M qps with good accuracy, low noise floor
 
 ---
 
@@ -219,7 +219,7 @@ style: |
 | False positive rate | Alarm frequency on clean traffic |
 | SNR | Signal / noise at each percentile |
 
-**Ground truth is exact:** injection time, scope, and magnitude are known — so every metric is reproducible across the full plant family.
+**Ground truth is exact:** injection time, scope, and magnitude are known — so every metric is reproducible across the full service space.
 
 </div>
 </div>
@@ -422,13 +422,13 @@ We don't have to settle for "these work in practice." We can ask: **are they clo
 
 # Thank you
 
-The simulator is open. The plant family is bounded. The ground truth is exact.
+The simulator is open. The service space is bounded. The ground truth is exact.
 
 *A playground for control and ML researchers with real-world grounding.*
 
 ---
 
-## Appendix: plant family coverage
+## Appendix: service space coverage
 
 | Distribution | Parameter | Range |
 |---|---|---|
