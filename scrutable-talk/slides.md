@@ -226,9 +226,9 @@ style: |
 
 ---
 
-## SLO thresholds: one controller, done rigorously
+## SLOs
 
-SLO thresholds are the canonical sensor: monitor P99.9, alert when it crosses a burn-in-calibrated threshold
+SLO thresholds are the canonical practicioner sensor: monitor P99.9, alert when it crosses a calibrated threshold
 
 <div class="callout">
 
@@ -244,7 +244,7 @@ SLO thresholds are the canonical sensor: monitor P99.9, alert when it crosses a 
 
 ---
 
-## Why does detection fail? The SNR framing
+## Evaluating SLOs using SNR
 
 $$\text{SNR}(p) = \frac{\text{signal}(p)}{\text{noise}(p)} = \frac{\text{percentile}_p(\text{post}) - \text{percentile}_p(\text{baseline})}{\text{std dev of } \text{percentile}_p \text{ across burn-in windows}}$$
 
@@ -259,7 +259,7 @@ $$\text{SNR}(p) = \frac{\text{signal}(p)}{\text{noise}(p)} = \frac{\text{percent
 
 ---
 
-## P99.9 noise floor is window-size invariant for high-variance services
+## Practioners think long windows will save us from SLO noise
 
 <div style="font-size:0.72em;font-family:'Helvetica Neue',Arial,sans-serif;margin-top:0.3em">
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:2em">
@@ -373,7 +373,7 @@ Changes arrive as a Poisson process; each independently carries a bug with proba
 
 ---
 
-## Canary detection: plant profile is decisive
+## Canary detection: service variance is a decisive factor
 
 *150 changes/week, 1 % bug rate, 2-day bake, P99.9 SLO, 5-min window — varied at 100 %/150 %/200 % velocity*
 
@@ -521,28 +521,15 @@ We don't have to settle for "these work in practice." We can ask: **are they clo
 
 ## Open questions
 
-- Is there a **detectability bound** as a function of plant parameters?
-- Which region of plant space is **hardest to control** — and do real services cluster there?
+- Is there a **detectability bound** as a function of service workload parameters? (almost certainly yes)
+- What is the distribution of actual production services across the space?
+- Are there other dimensions that should be added to this model?
+- Which region of service space is **hardest to control** — and do real services cluster there?
 - Can we **derive** better controllers than the ones practitioners invented by intuition?
 
 ---
 
 <!-- _class: outro -->
 
-# Thank you
+# Questions?
 
-The simulator is open. The service space is bounded. The ground truth is exact.
-
-*A playground for control and ML researchers with real-world grounding.*
-
----
-
-## Appendix: service space coverage
-
-| Distribution | Parameter | Range |
-|---|---|---|
-| Lognormal | σ (shape) | 0.1 → 2.0 |
-| Weibull | k (shape) | 0.5 → 3.0 |
-| Latency multiplier | fault magnitude | 1.5× → 10× |
-
-*Five representative services span low-variance → high-variance extremes*
