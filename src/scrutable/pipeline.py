@@ -85,11 +85,24 @@ class RolloutController:
         self._add_actuator: Callable[[object], None] | None = None
         self._change_counter = 0
 
-        # metrics
+        # aggregate metrics
         self.releases_attempted = 0
         self.releases_completed = 0
         self.releases_rolled_back = 0
         self.debug_durations: list[float] = []
+
+        # per-release-type breakdown
+        self.original_releases_attempted = 0
+        self.original_releases_with_bug = 0
+        self.original_rollbacks = 0    # buggy originals caught by canary (TP)
+        self.false_rollbacks = 0       # clean originals rolled back by false alarm (FP)
+        self.canary_escapes = 0        # buggy originals that completed without alarm (FN)
+        self.retry_releases_attempted = 0
+        self.retry_rollbacks = 0       # fix releases that were rolled back (expected: 0)
+
+        # state for the currently active rollout
+        self._active_release_is_retry = False
+        self._active_release_has_bug = False
 
     def _activate(
         self,
@@ -127,6 +140,17 @@ class RolloutController:
         assert self._add_rollout is not None and self._add_actuator is not None
         self.releases_attempted += 1
 
+        is_retry = release.release_id.endswith("-fix")
+        has_bug = any(c.disturbance is not None for c in release.changes)
+        self._active_release_is_retry = is_retry
+        self._active_release_has_bug = has_bug
+        if is_retry:
+            self.retry_releases_attempted += 1
+        else:
+            self.original_releases_attempted += 1
+            if has_bug:
+                self.original_releases_with_bug += 1
+
         canary_deploy_time = sim_time
         gates: list[list[GateCallback]] = [[] for _ in self._cluster_order]
         if len(self._cluster_order) > 1:
@@ -159,6 +183,8 @@ class RolloutController:
         self._active_rollout = None
         if state == RolloutState.COMPLETED:
             self.releases_completed += 1
+            if not self._active_release_is_retry and self._active_release_has_bug:
+                self.canary_escapes += 1
             if self._pending:
                 self._start_rollout(self._pending.popleft(), sim_time)
         elif state == RolloutState.ROLLED_BACK:
@@ -168,6 +194,12 @@ class RolloutController:
 
     def _on_failure(self, failed_release: Release, sim_time: float) -> None:
         assert self._loop is not None and self._rng is not None
+        if self._active_release_is_retry:
+            self.retry_rollbacks += 1
+        elif self._active_release_has_bug:
+            self.original_rollbacks += 1
+        else:
+            self.false_rollbacks += 1
         fixed_changes = [
             ReleaseChange(change_id=ch.change_id, disturbance=None)
             for ch in failed_release.changes

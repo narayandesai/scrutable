@@ -26,6 +26,14 @@ class CanaryRolloutResult:
     slo_target: SloTarget
     calibration_duration_s: float
     effective_fpr: float
+    # per-release-type breakdown
+    original_releases_attempted: int
+    original_releases_with_bug: int
+    original_rollbacks: int     # TP: buggy originals caught
+    false_rollbacks: int        # FP: clean originals rolled back
+    canary_escapes: int         # FN: buggy originals that completed
+    retry_releases_attempted: int
+    retry_rollbacks: int
 
 
 def run_canary_rollout(
@@ -152,6 +160,13 @@ def run_canary_rollout(
         slo_target=target,
         calibration_duration_s=calibration_duration,
         effective_fpr=_eff_fpr,
+        original_releases_attempted=pipeline.original_releases_attempted,
+        original_releases_with_bug=pipeline.original_releases_with_bug,
+        original_rollbacks=pipeline.original_rollbacks,
+        false_rollbacks=pipeline.false_rollbacks,
+        canary_escapes=pipeline.canary_escapes,
+        retry_releases_attempted=pipeline.retry_releases_attempted,
+        retry_rollbacks=pipeline.retry_rollbacks,
     )
 
 
@@ -206,10 +221,6 @@ if __name__ == "__main__":
     print(f"  slo_threshold:        {_slo.threshold:.4f} s  (latency P{_slo.percentile})")
 
     print("\n=== Results ===")
-    hdr = f"  {'Scale':>6}  {'Bundle':>6}  {'P(bug)':>7}  {'Attempted':>9}  "
-    hdr += f"{'Rollback%':>9}  {'Debug median':>13}"
-    print(hdr)
-    print("  " + "-" * (len(hdr) - 2))
 
     # 100% result already in hand; run 50% and 150% with the shared SLO target.
     _scale_results = {1.0: _base}
@@ -226,18 +237,22 @@ if __name__ == "__main__":
         print("done")
 
     print()
+    hdr = (f"  {'Scale':>6}  {'Bundle':>6}  {'P(bug)':>7}  "
+           f"{'Orig':>6}  {'w/bug':>6}  "
+           f"{'Caught':>7}  {'Escaped':>8}  {'FalseRB':>8}  "
+           f"{'Retries':>8}  {'RetryRB':>8}  {'DebugMed':>9}")
+    print(hdr)
+    print("  " + "-" * (len(hdr) - 2))
+
     for scale in [0.5, 1.0, 1.5]:
         r = _scale_results[scale]
-        changes_per_week = _BASE_CHANGES_PER_WEEK * scale
-        bundle_size = max(1, round(changes_per_week))
+        bundle_size = max(1, round(_BASE_CHANGES_PER_WEEK * scale))
         p_bug = 1 - (1 - _SHARED['bug_fraction']) ** bundle_size
-        rollback_rate = (
-            r.releases_rolled_back / r.releases_attempted
-            if r.releases_attempted > 0 else 0.0
-        )
         debug_med = (
             f"{float(np.median(r.debug_durations_s))/3600:.1f}h"
             if r.debug_durations_s else "n/a"
         )
         print(f"  {int(scale*100):>5}%  {bundle_size:>6}  {p_bug:>7.1%}  "
-              f"{r.releases_attempted:>9}  {rollback_rate:>9.1%}  {debug_med:>13}")
+              f"{r.original_releases_attempted:>6}  {r.original_releases_with_bug:>6}  "
+              f"{r.original_rollbacks:>7}  {r.canary_escapes:>8}  {r.false_rollbacks:>8}  "
+              f"{r.retry_releases_attempted:>8}  {r.retry_rollbacks:>8}  {debug_med:>9}")
