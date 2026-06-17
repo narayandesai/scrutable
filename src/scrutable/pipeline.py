@@ -17,10 +17,10 @@ class ChangeSource:
     def next_arrival_delay(self, rng: np.random.Generator) -> float:
         return float(rng.exponential(1.0 / self.change_rate))
 
-    def generate_change(self, change_id: str, rng: np.random.Generator) -> ReleaseChange:
+    def generate_change(self, change_id: str, rng: np.random.Generator, submitted_at: float = 0.0) -> ReleaseChange:
         has_bug = float(rng.random()) < self.bug_fraction
         disturbance = self.disturbance_factory(change_id) if has_bug else None
-        return ReleaseChange(change_id=change_id, disturbance=disturbance)
+        return ReleaseChange(change_id=change_id, disturbance=disturbance, submitted_at=submitted_at)
 
 
 class ReleaseBundler:
@@ -90,6 +90,7 @@ class RolloutController:
         self.releases_completed = 0
         self.releases_rolled_back = 0
         self.debug_durations: list[float] = []
+        self.change_lead_times: list[float] = []
 
         # per-release-type breakdown
         self.original_releases_attempted = 0
@@ -103,6 +104,7 @@ class RolloutController:
         # state for the currently active rollout
         self._active_release_is_retry = False
         self._active_release_has_bug = False
+        self._active_release_changes: list[ReleaseChange] = []
 
     def _activate(
         self,
@@ -126,7 +128,7 @@ class RolloutController:
     def _on_change_arrives(self, sim_time: float) -> None:
         assert self._rng is not None
         self._change_counter += 1
-        change = self._change_stream.generate_change(f"ch{self._change_counter}", self._rng)
+        change = self._change_stream.generate_change(f"ch{self._change_counter}", self._rng, submitted_at=sim_time)
         release = self._bundler.add(change)
         if release is not None:
             debug_in_progress = self._rollback_done or self._debug_done
@@ -144,6 +146,7 @@ class RolloutController:
         has_bug = any(c.disturbance is not None for c in release.changes)
         self._active_release_is_retry = is_retry
         self._active_release_has_bug = has_bug
+        self._active_release_changes = list(release.changes)
         if is_retry:
             self.retry_releases_attempted += 1
         else:
@@ -185,6 +188,8 @@ class RolloutController:
             self.releases_completed += 1
             if not self._active_release_is_retry and self._active_release_has_bug:
                 self.canary_escapes += 1
+            for ch in self._active_release_changes:
+                self.change_lead_times.append(sim_time - ch.submitted_at)
             if self._pending:
                 self._start_rollout(self._pending.popleft(), sim_time)
         elif state == RolloutState.ROLLED_BACK:
@@ -201,7 +206,7 @@ class RolloutController:
         else:
             self.false_rollbacks += 1
         fixed_changes = [
-            ReleaseChange(change_id=ch.change_id, disturbance=None)
+            ReleaseChange(change_id=ch.change_id, disturbance=None, submitted_at=ch.submitted_at)
             for ch in failed_release.changes
         ]
         fixed_release = Release(

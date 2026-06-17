@@ -114,6 +114,7 @@ class RolloutStateTransition:
 class ReleaseChange:
     change_id: str
     disturbance: Disturbance | None = None
+    submitted_at: float = 0.0
 
 
 @dataclass

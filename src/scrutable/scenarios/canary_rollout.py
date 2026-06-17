@@ -34,6 +34,8 @@ class CanaryRolloutResult:
     canary_escapes: int         # FN: buggy originals that completed
     retry_releases_attempted: int
     retry_rollbacks: int
+    # per-change lead times (submission → completed rollout), in seconds
+    change_lead_times: list[float]
 
 
 def run_canary_rollout(
@@ -55,6 +57,7 @@ def run_canary_rollout(
     max_alerts_per_bake: float | None = 0.5,
     window_size: float = 60.0,
     seed: int = 42,
+    mix: WorkloadMix | None = None,
 ) -> CanaryRolloutResult:
     plant = Plant(PlantConfig(
         regions=["r1"],
@@ -65,19 +68,20 @@ def run_canary_rollout(
         },
     ))
 
-    model = WorkloadModel(
-        workload_id="api",
-        latency_median=0.1,
-        latency_sigma=0.3,
-        error_scale=1000.0,
-        error_shape=1.5,
-        noise_sigma=0.001,
-    )
-    mix = WorkloadMix(
-        total_rate=total_rate,
-        period=3600.0,
-        entries=[WorkloadEntry(model=model, share=1.0)],
-    )
+    if mix is None:
+        model = WorkloadModel(
+            workload_id="api",
+            latency_median=0.1,
+            latency_sigma=0.3,
+            error_scale=1000.0,
+            error_shape=1.5,
+            noise_sigma=0.001,
+        )
+        mix = WorkloadMix(
+            total_rate=total_rate,
+            period=3600.0,
+            entries=[WorkloadEntry(model=model, share=1.0)],
+        )
 
     _calibrator_proto = LatencySloCalibrator(
         target_fpr=target_fpr,
@@ -167,6 +171,7 @@ def run_canary_rollout(
         canary_escapes=pipeline.canary_escapes,
         retry_releases_attempted=pipeline.retry_releases_attempted,
         retry_rollbacks=pipeline.retry_rollbacks,
+        change_lead_times=list(pipeline.change_lead_times),
     )
 
 
@@ -185,7 +190,7 @@ if __name__ == "__main__":
         max_daily_alerts=4.0,
         max_alerts_per_bake=0.5,
         total_rate=10.0,
-        total_duration=8 * _WEEK,
+        total_duration=6 * _WEEK,
         seed=42,
     )
 
@@ -222,9 +227,9 @@ if __name__ == "__main__":
 
     print("\n=== Results ===")
 
-    # 100% result already in hand; run 50% and 150% with the shared SLO target.
+    # 100% result already in hand; run 150% and 200% with the shared SLO target.
     _scale_results = {1.0: _base}
-    for scale in [0.5, 1.5]:
+    for scale in [1.5, 2.0]:
         changes_per_week = _BASE_CHANGES_PER_WEEK * scale
         bundle_size = max(1, round(changes_per_week))
         print(f"  Running {int(scale*100)}%... ", end="", flush=True)
@@ -244,7 +249,7 @@ if __name__ == "__main__":
     print(hdr)
     print("  " + "-" * (len(hdr) - 2))
 
-    for scale in [0.5, 1.0, 1.5]:
+    for scale in [1.0, 1.5, 2.0]:
         r = _scale_results[scale]
         bundle_size = max(1, round(_BASE_CHANGES_PER_WEEK * scale))
         p_bug = 1 - (1 - _SHARED['bug_fraction']) ** bundle_size
@@ -256,3 +261,23 @@ if __name__ == "__main__":
               f"{r.original_releases_attempted:>6}  {r.original_releases_with_bug:>6}  "
               f"{r.original_rollbacks:>7}  {r.canary_escapes:>8}  {r.false_rollbacks:>8}  "
               f"{r.retry_releases_attempted:>8}  {r.retry_rollbacks:>8}  {debug_med:>9}")
+
+    print("\n=== Change Velocity ===")
+    sim_weeks = _SHARED['total_duration'] / _WEEK
+    chdr = (f"  {'Scale':>6}  {'Changes':>8}  {'Changes/wk':>11}  "
+            f"{'LeadP50':>8}  {'LeadP90':>8}  {'LeadP95':>8}")
+    print(chdr)
+    print("  " + "-" * (len(chdr) - 2))
+    for scale in [1.0, 1.5, 2.0]:
+        r = _scale_results[scale]
+        lt = r.change_lead_times
+        if lt:
+            p50 = f"{float(np.percentile(lt, 50))/3600:.1f}h"
+            p90 = f"{float(np.percentile(lt, 90))/3600:.1f}h"
+            p95 = f"{float(np.percentile(lt, 95))/3600:.1f}h"
+        else:
+            p50 = p90 = p95 = "n/a"
+        n_changes = len(lt)
+        rate = n_changes / sim_weeks if sim_weeks > 0 else 0.0
+        print(f"  {int(scale*100):>5}%  {n_changes:>8}  {rate:>11.1f}  "
+              f"{p50:>8}  {p90:>8}  {p95:>8}")
