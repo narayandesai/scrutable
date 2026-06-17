@@ -150,9 +150,9 @@ style: |
 
 ---
 
-## The reliability toolkit
+## The pragmatic reliability toolkit
 
-- Practitioners have built a toolkit through hard knocks: SLOs, canaries, auto-drains
+- Practitioners have built a toolkit through hard knocks: SLOs, canaries
 - These practices are very artisinal; every service uses tuned methods to sense
 - Limited rigor, generally very noisy/effort intensive
 - Key problem: every unhappy service is different
@@ -164,6 +164,8 @@ style: |
 - Monitoring metrics are **sensors**, mitigations are **feedback controllers**
 - The gap: the *plant family* of production services has never been formally characterized or rigorously evaluated
 - Missing a model/simulator of production services. 
+
+---
 
 ## Prior art: reliability analytics
 
@@ -188,6 +190,39 @@ style: |
 </div>
 
 *Example: clean burn-in → disturbance injected → detector fires → ground truth confirmed*
+
+---
+
+## SLO detection — scenario design
+
+<div class="columns">
+<div>
+
+### Calibration phase
+- Service runs clean for N windows
+- P99.9 sampled per window (configurable: 1 s–2 min)
+- Threshold set to hit target FPR (e.g. 0.1 % per window)
+
+### Evaluation phase
+- **Same plant**, disturbance injected at a known time
+- Disturbance: latency multiplier applied to all nodes
+- Sensor fires when P99.9 exceeds calibrated threshold
+
+</div>
+<div>
+
+### What we measure
+
+| Metric | How |
+|---|---|
+| Detection latency | Time from injection to first alarm |
+| False positive rate | Alarm frequency on clean traffic |
+| SNR | Signal / noise at each percentile |
+
+**Ground truth is exact:** injection time, scope, and magnitude are known — so every metric is reproducible across the full plant family.
+
+</div>
+</div>
 
 ---
 
@@ -305,12 +340,67 @@ SC detects perfectly at every window size (SNR 7–51, all above the line). LT S
 
 ---
 
+## Canary rollout — how the controller works
+
+Changes arrive as a Poisson process; each independently carries a bug with probability *p*.
+
+<div class="columns">
+<div>
+
+### Rollout sequence
+1. **Bundle** N changes into a release
+2. **Deploy to canary** (20 % of nodes) — bake for T s under the SLO sensor
+3. **Gate:** any SLO alarm since canary deploy?
+   - No alarm → promote to **prod**
+   - Alarm → **rollback** (completes in ~1 h)
+4. **Remediation cycle:** debug phase (lognormal, median 6 h) → re-deploy fixed release
+
+</div>
+<div>
+
+### Actuation outcomes
+
+| Outcome | Label | Meaning |
+|---|---|---|
+| Buggy release rolled back | TP | Canary caught the fault |
+| Bug promoted to prod | FN | Escaped detection |
+| Clean release rolled back | FP | Noise triggered alarm |
+
+**Canary fraction governs SNR.** Too small → bug signal below the noise floor → FN rate rises. The SNR framework gives a principled minimum fraction.
+
+</div>
+</div>
+
+---
+
+## Canary rollout — results
+
+*Baseline: 150 changes/week, 1 % bug fraction, 2-day bake, 5-min SLO window*
+
+<div class="callout">
+
+**Setup:** SLO calibrated on clean burn-in, then applied unchanged across change-rate scales (50 %, 100 %, 150 %)
+
+</div>
+
+- At baseline cadence: bugs are caught reliably; false rollback rate is low
+- **Higher velocity raises bundle P(bug)** — the rollout controller absorbs this, but debug-cycle time becomes the bottleneck
+- **Lower velocity reduces throughput** more than it reduces incidents — smaller bundles don't help proportionally once FPR is already controlled
+
+<div class="warning">
+
+**The same SNR limit applies:** if canary traffic is too sparse, P99.9 noise drowns the bug signal — detection fails regardless of bake duration
+
+</div>
+
+---
+
 ## The method generalizes
 
 The same framework applies to the other canonical controllers:
 
-- **Canary rollouts:** what is the minimum canary fraction for SNR > 1? Canary fraction has a measurable optimum.
-- **Cell drains:** blast radius reduction is quantifiable — at what cost to availability?
+- **SLO thresholds:** optimal percentile and window size are derivable from plant parameters, not trial and error
+- **Canary rollouts:** minimum canary fraction for SNR > 1 is computable; cadence vs. batch-size trade-offs are quantifiable
 
 <div class="callout">
 
