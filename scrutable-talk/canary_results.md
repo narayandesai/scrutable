@@ -24,10 +24,8 @@ The same calibration procedure is applied to both profiles. The SLO threshold is
 | Scale | Orig releases | w/ bug | Caught (TP) | Escaped (FN) | False RBs (FP) | Retries | Debug median |
 |-------|--------------|--------|-------------|--------------|----------------|---------|--------------|
 | 100%  | 6            | 5      | **5 (100%)** | 0           | 0              | 6       | 6.2 h        |
-| 150%† | 2           | 1      | **1 (100%)** | 0           | 1              | 2       | 1.9 h        |
+| 150%  | 5            | 4      | **4 (100%)** | 0           | 1              | 5       | 2.9 h        |
 | 200%  | 5            | 5      | **5 (100%)** | 0           | 0              | 8       | 4.9 h        |
-
-† Only 2 original releases fired at 150% in 6 weeks; one false rollback consumed a debug slot. Small sample.
 
 ### long\_tail — threshold 37 062 s
 
@@ -50,7 +48,7 @@ The 1 catch at 150% long-tail is a transient: a slow workload happened to be act
 | Scale | Changes shipped | Changes/wk | Lead P50 | Lead P90 | Lead P95 |
 |-------|----------------|------------|----------|----------|----------|
 | 100%  | 750            | 125        | 154 h    | 232 h    | 273 h    |
-| 150%† | 225           | 38         | 153 h    | 229 h    | 238 h    |
+| 150%  | 1125           | 188        | 143 h    | 214 h    | 225 h    |
 | 200%  | 1500           | 250        | 159 h    | 226 h    | 245 h    |
 
 ### long\_tail
@@ -68,14 +66,14 @@ Lead time is measured from individual change submission to completed rollout. Fo
 **P50 overhead of effective detection: ~20 h (~15%).**  
 SC lead times are 20–30 h longer at P50 than LT. This is the steady-state cost of the rollback+debug cycle amortized across all changes. Since most changes ship cleanly (only 1% are buggy), the overhead is diluted: a 6 h debug cycle on 1 out of 150 changes adds 6/150 × 24 h ≈ 1 h to average lead time, plus 48 h fix-release bake time for affected changes.
 
-**P95 overhead: +30–60 h.**  
-At the tail, changes that land in a buggy release experience the full rollback+debug+re-bake penalty (48 h bake + 1 h rollback + up to 24 h debug at P95 = ~73 h extra). The P95 spread reflects this: SC P95 is 238–273 h vs LT P95 213–224 h.
+**P95 overhead: +12–60 h.**  
+At the tail, changes that land in a buggy release experience the full rollback+debug+re-bake penalty (48 h bake + 1 h rollback + up to 24 h debug at P95 = ~73 h extra). The P95 spread reflects this: SC P95 is 225–273 h vs LT P95 213–224 h.
 
-**Throughput is equal when the pipeline runs normally.**  
-At 100% and 200%, both profiles ship identical changes/week (125 and 250). The SC pipeline absorbs bugs without throughput loss because retries always succeed. The velocity cost is latency, not volume — except when debug cycles stack or false rollbacks consume capacity (the 150% SC anomaly).
+**Throughput is equal across all velocities.**  
+At 100%, 150%, and 200%, both profiles ship 125, 188, and 250 changes/week respectively. The SC pipeline absorbs bugs without throughput loss because retries always succeed. The velocity cost is latency, not volume.
 
-**Long-tail throughput scales linearly; SC throughput is noisier.**  
-LT ships 125→188→250 changes/week across scales cleanly. SC is noisier because each rollback-and-retry adds non-deterministic delay that can prevent the next bundle from starting before simulation end.
+**Long-tail throughput scales linearly; SC throughput is similar.**  
+Both profiles ship 125→188→250 changes/week across scales. SC is slightly noisier at P95 because rollback-and-retry cycles add non-deterministic delay, but the effect is modest.
 
 ---
 
@@ -89,4 +87,4 @@ LT ships 125→188→250 changes/week across scales cleanly. SC is noisier becau
 
 4. **Plant profile selection is a first-class decision for canary design.** A team running a long-tail service must either: (a) use a different sensor (lower percentile, or a metric other than latency P99.9), (b) increase canary traffic concentration, or (c) accept that their canary provides no meaningful protection against latency regressions.
 
-5. **The 150% SC anomaly (38 changes/wk) is a small-sample artifact**, not a real velocity collapse. With only 2 original releases in 6 weeks, one false rollback dominated the result. Longer simulation windows or multiple seeds are needed for reliable 150% statistics.
+5. **A pipeline deadlock was found and fixed during analysis.** The 150% SC run initially produced only 2 releases in 6 weeks. Investigation traced it to a timing bug: a sensor tick scheduled at the same timestamp as rollback completion fired first (lower event-loop sequence), recording a stale alarm while the prior release's disturbance was still live. That alarm's timestamp matched `canary_deploy_time` of the fix release exactly, causing the prod-stage gate (`any_since(dt)` with `>=`) to fail. The engine halted the rollout without triggering rollback or `_on_failure`, deadlocking the pipeline. Fixed by offsetting the gate threshold by 1 ns to exclude alarms at exactly the deploy moment. With the fix, 150% SC produces the expected 5 original releases and 188 changes/week.

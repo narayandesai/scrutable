@@ -388,7 +388,7 @@ Changes arrive as a Poisson process; each independently carries a bug with proba
     <div style="flex:1;min-height:2px;height:0.5%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">0%</span></div>
   </div>
   <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
-    <div style="flex:1;height:100%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">100%†</span></div>
+    <div style="flex:1;height:100%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">100%</span></div>
     <div style="flex:1;height:20%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">20%</span></div>
   </div>
   <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
@@ -399,7 +399,6 @@ Changes arrive as a Poisson process; each independently carries a bug with proba
 <div style="display:flex;gap:8px;padding-top:3px;color:#888">
   <div style="flex:1;text-align:center">100%</div><div style="flex:1;text-align:center">150%</div><div style="flex:1;text-align:center">200%</div>
 </div>
-<div style="color:#888;font-size:0.88em;margin-top:2px">† n=1 release; small sample</div>
 </div>
 
 <div>
@@ -410,7 +409,7 @@ Changes arrive as a Poisson process; each independently carries a bug with proba
     <div style="flex:1;height:48%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">133h</span></div>
   </div>
   <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
-    <div style="flex:1;height:56%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">153h</span></div>
+    <div style="flex:1;height:52%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">143h</span></div>
     <div style="flex:1;height:52%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">143h</span></div>
   </div>
   <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
@@ -433,7 +432,7 @@ Changes arrive as a Poisson process; each independently carries a bug with proba
 
 <div class="callout" style="font-size:0.78em;margin-top:0.4em">
 
-SC catches **100 % of bugs** at all velocities. LT catches **~0 %** — the 0.3 s disturbance is invisible against a 37 000 s noise floor. The velocity cost of effective detection is modest: ~20 h extra lead time at P50 (~15 %).
+SC catches **100 % of bugs** at all velocities. LT catches **~0 %** — the 0.3 s disturbance is invisible against a 37 000 s noise floor. The velocity cost of effective detection is modest: P50 lead times are within 10–25 h across all scales (~10–15 %).
 
 </div>
 
@@ -454,7 +453,7 @@ SC catches **100 % of bugs** at all velocities. LT catches **~0 %** — the 0.3 
     <div style="flex:1;height:78%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">213h</span></div>
   </div>
   <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
-    <div style="flex:1;height:87%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">238h</span></div>
+    <div style="flex:1;height:82%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">225h</span></div>
     <div style="flex:1;height:82%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">224h</span></div>
   </div>
   <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
@@ -475,7 +474,7 @@ SC catches **100 % of bugs** at all velocities. LT catches **~0 %** — the 0.3 
     <div style="flex:1;height:50%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">125</span></div>
   </div>
   <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
-    <div style="flex:1;height:15%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">38†</span></div>
+    <div style="flex:1;height:75%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">188</span></div>
     <div style="flex:1;height:75%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">188</span></div>
   </div>
   <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
@@ -486,7 +485,6 @@ SC catches **100 % of bugs** at all velocities. LT catches **~0 %** — the 0.3 
 <div style="display:flex;gap:8px;padding-top:3px;color:#888">
   <div style="flex:1;text-align:center">100%</div><div style="flex:1;text-align:center">150%</div><div style="flex:1;text-align:center">200%</div>
 </div>
-<div style="color:#888;font-size:0.88em;margin-top:2px">† 150% SC: n=2 releases, one false rollback</div>
 </div>
 
 </div>
