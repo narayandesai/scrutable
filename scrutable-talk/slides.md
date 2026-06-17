@@ -373,23 +373,132 @@ Changes arrive as a Poisson process; each independently carries a bug with proba
 
 ---
 
-## Canary rollout — results
+## Canary detection: plant profile is decisive
 
-*Baseline: 150 changes/week, 1 % bug fraction, 2-day bake, 5-min SLO window*
+*150 changes/week, 1 % bug rate, 2-day bake, P99.9 SLO, 5-min window — varied at 100 %/150 %/200 % velocity*
 
-<div class="callout">
+<div style="font-size:0.72em;font-family:'Helvetica Neue',Arial,sans-serif;margin-top:0.5em">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2em">
 
-**Setup:** SLO calibrated on clean burn-in, then applied unchanged across change-rate scales (50 %, 100 %, 150 %)
+<div>
+<div style="font-weight:bold;margin-bottom:4px;color:#1a1a2e">Bug catch rate (higher = better)</div>
+<div style="position:relative;height:155px;padding-top:20px;box-sizing:border-box;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #ccc">
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:100%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">100%</span></div>
+    <div style="flex:1;min-height:2px;height:0.5%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">0%</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:100%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">100%†</span></div>
+    <div style="flex:1;height:20%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">20%</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:100%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">100%</span></div>
+    <div style="flex:1;min-height:2px;height:0.5%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">0%</span></div>
+  </div>
+</div>
+<div style="display:flex;gap:8px;padding-top:3px;color:#888">
+  <div style="flex:1;text-align:center">100%</div><div style="flex:1;text-align:center">150%</div><div style="flex:1;text-align:center">200%</div>
+</div>
+<div style="color:#888;font-size:0.88em;margin-top:2px">† n=1 release; small sample</div>
+</div>
+
+<div>
+<div style="font-weight:bold;margin-bottom:4px;color:#1a1a2e">Change lead time P50 (lower = better)</div>
+<div style="position:relative;height:155px;padding-top:20px;box-sizing:border-box;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #ccc">
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:56%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">154h</span></div>
+    <div style="flex:1;height:48%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">133h</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:56%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">153h</span></div>
+    <div style="flex:1;height:52%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">143h</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:58%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">159h</span></div>
+    <div style="flex:1;height:47%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">131h</span></div>
+  </div>
+</div>
+<div style="display:flex;gap:8px;padding-top:3px;color:#888">
+  <div style="flex:1;text-align:center">100%</div><div style="flex:1;text-align:center">150%</div><div style="flex:1;text-align:center">200%</div>
+</div>
+<div style="color:#888;font-size:0.88em;margin-top:2px">normalized to 275h max</div>
+</div>
+
+</div>
+<div style="display:flex;gap:1.5em;margin-top:0.5em;align-items:center">
+  <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#2a5db0;border-radius:2px"></span> spherical_cow (P99.9 threshold 0.30 s)</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#e84040;border-radius:2px"></span> long_tail (P99.9 threshold 37 062 s)</span>
+</div>
+</div>
+
+<div class="callout" style="font-size:0.78em;margin-top:0.4em">
+
+SC catches **100 % of bugs** at all velocities. LT catches **~0 %** — the 0.3 s disturbance is invisible against a 37 000 s noise floor. The velocity cost of effective detection is modest: ~20 h extra lead time at P50 (~15 %).
 
 </div>
 
-- At baseline cadence: bugs are caught reliably; false rollback rate is low
-- **Higher velocity raises bundle P(bug)** — the rollout controller absorbs this, but debug-cycle time becomes the bottleneck
-- **Lower velocity reduces throughput** more than it reduces incidents — smaller bundles don't help proportionally once FPR is already controlled
+---
 
-<div class="warning">
+## Canary rollout — P95 lead time and throughput
 
-**The same SNR limit applies:** if canary traffic is too sparse, P99.9 noise drowns the bug signal — detection fails regardless of bake duration
+*Same simulation — tail latency and change throughput across scales*
+
+<div style="font-size:0.72em;font-family:'Helvetica Neue',Arial,sans-serif;margin-top:0.5em">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2em">
+
+<div>
+<div style="font-weight:bold;margin-bottom:4px;color:#1a1a2e">Lead time P95 — tail cost of rollback+debug cycles</div>
+<div style="position:relative;height:155px;padding-top:20px;box-sizing:border-box;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #ccc">
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:100%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">273h</span></div>
+    <div style="flex:1;height:78%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">213h</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:87%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">238h</span></div>
+    <div style="flex:1;height:82%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">224h</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:90%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">245h</span></div>
+    <div style="flex:1;height:77%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">209h</span></div>
+  </div>
+</div>
+<div style="display:flex;gap:8px;padding-top:3px;color:#888">
+  <div style="flex:1;text-align:center">100%</div><div style="flex:1;text-align:center">150%</div><div style="flex:1;text-align:center">200%</div>
+</div>
+</div>
+
+<div>
+<div style="font-weight:bold;margin-bottom:4px;color:#1a1a2e">Changes shipped per week</div>
+<div style="position:relative;height:155px;padding-top:20px;box-sizing:border-box;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #ccc">
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:50%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">125</span></div>
+    <div style="flex:1;height:50%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">125</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:15%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">38†</span></div>
+    <div style="flex:1;height:75%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">188</span></div>
+  </div>
+  <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%">
+    <div style="flex:1;height:100%;background:#2a5db0;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#2a5db0;font-weight:bold">250</span></div>
+    <div style="flex:1;height:100%;background:#e84040;border-radius:2px 2px 0 0;position:relative"><span style="position:absolute;bottom:calc(100%+1px);left:0;right:0;text-align:center;color:#e84040">250</span></div>
+  </div>
+</div>
+<div style="display:flex;gap:8px;padding-top:3px;color:#888">
+  <div style="flex:1;text-align:center">100%</div><div style="flex:1;text-align:center">150%</div><div style="flex:1;text-align:center">200%</div>
+</div>
+<div style="color:#888;font-size:0.88em;margin-top:2px">† 150% SC: n=2 releases, one false rollback</div>
+</div>
+
+</div>
+<div style="display:flex;gap:1.5em;margin-top:0.5em;align-items:center">
+  <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#2a5db0;border-radius:2px"></span> spherical_cow</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:#e84040;border-radius:2px"></span> long_tail</span>
+</div>
+</div>
+
+<div class="callout" style="font-size:0.78em;margin-top:0.4em">
+
+P95 overhead of effective detection: **+30–60 h** (rollback ~1 h + debug median 6 h, compounded at tail). Throughput is equal when the pipeline isn't stalled — the cost is latency, not volume.
 
 </div>
 
